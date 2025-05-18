@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "${MONGO_DOCKER_HOST_PORT:-27017}:27017"
+    environment:
+      # These variables are used by MongoDB on its first startup to create a root user.
+      # Ensure these match what you intend to use for authentication.
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root} # Defaults to 'root' if MONGO_ROOT_USER is not in .env
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-example} # Defaults to 'example' if MONGO_ROOT_PASSWORD is not in .env
+      # The MONGO_INITDB_DATABASE is where this user gets admin privileges, typically 'admin'.
+    volumes:
+      # Changed from named volume 'mongo_data' to a host path binding.
+      # This will map the host directory /home/patrick/data/db to /data/db inside the container.
+      # Ensure /home/patrick/data/db exists on your host and Docker has permissions.
+      - /home/patrick/data/db:/data/db # Persists MongoDB data to host path
+    healthcheck:
+      # This command runs inside the mongo container to check its health.
+      # It attempts to ping MongoDB using the root credentials.
+      # If MONGO_ROOT_USER/PASSWORD are not in your .env, it uses 'root'/'example'.
+      test: |
+        mongosh \
+        --norc \
+        --host localhost \
+        --username "${MONGO_ROOT_USER:-root}" \
+        --password "${MONGO_ROOT_PASSWORD:-example}" \
+        --authenticationDatabase "${MONGO_AUTH_SOURCE_DB:-admin}" \
+        --eval "try { db.adminCommand('ping') } catch (e) { print(e); quit(1); }" \
+        --quiet
+      interval: 15s # Check health every 15 seconds
+      timeout: 10s # Wait up to 10 seconds for the check to complete
+      retries: 5 # Retry 5 times on failure before marking as unhealthy
+      start_period: 40s # Wait 40 seconds after container starts before first health check (allows MongoDB to initialize)
+
+  auth-app:
+    image: node:20
+    container_name: js-auth
+    working_dir: /usr/src/app
+    volumes:
+      - ./js-auth:/usr/src/app
+    command: sh -c "npm install && node app.js"
+    ports:
+      - "${APP_DOCKER_HOST_PORT:-7001}:${AUTH_APP_CONTAINER_PORT:-7000}"
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${AUTH_APP_CONTAINER_PORT}
+      APP_BASE_URL: ${APP_BASE_URL}
+      # This URI is used by your application to connect to MongoDB.
+      # It MUST use the same credentials (MONGO_ROOT_USER, MONGO_ROOT_PASSWORD)
+      # and authSource (MONGO_AUTH_SOURCE_DB) that MongoDB was initialized with.
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_AUTH_DB_NAME}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
+      MONGO_AUTH_DB_NAME: ${MONGO_AUTH_DB_NAME} # The database your auth app will primarily use
+      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME} # Database for session storage
+      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Auth DB, typically 'admin' for root user
+      SESSION_SECRET: ${SESSION_SECRET}
+      CSRF_SECRET: ${CSRF_SECRET}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+      MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID}
+      EMAIL_SENDER_ADDRESS: ${EMAIL_SENDER_ADDRESS}
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL}
+      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD}
+    depends_on:
+      mongo:
+        condition: service_healthy # Waits for mongo service to pass its healthcheck
+
+  quiz-app:
+    image: node:20
+    container_name: webquiz
+    working_dir: /usr/src/app
+    volumes:
+      - ./webquiz:/usr/src/app
+    command: sh -c "npm install && node server.js"
+    ports:
+      - "${QUIZ_APP_HOST_PORT:-4000}:${QUIZ_APP_CONTAINER_PORT:-3000}"
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${QUIZ_APP_CONTAINER_PORT}
+      # Ensure this URI also uses the correct credentials if it needs to authenticate.
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_SESSIONS_DB_NAME}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
+      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME} # The database your quiz app will use for sessions
+      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Auth DB, typically 'admin' for root user
+      SESSION_SECRET: ${SESSION_SECRET}
+      CSRF_SECRET: ${CSRF_SECRET}
+      APP_BASE_URL: ${APP_BASE_URL}
+    depends_on:
+      mongo:
+        condition: service_healthy # Waits for mongo service to pass its healthcheck
+
+# Removed the named volume 'mongo_data' as we are now using a host path bind mount.
+# volumes:
+#   mongo_data: # Defines the named volume for MongoDB data persistence

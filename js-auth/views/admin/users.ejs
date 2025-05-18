@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'Manage Users' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .table-actions .btn {
+            margin-right: 5px;
+            margin-bottom: 5px; /* For wrapping on small screens */
+        }
+        .table-actions form {
+            margin-bottom: 0; /* Override default form margin if any */
+        }
+        /* Responsive table styles from your style.css might need to be included here or in style.css itself */
+        /* For the data-label functionality on small screens */
+        @media (max-width: 768px) {
+            table.responsive-table,
+            table.responsive-table thead,
+            table.responsive-table tbody,
+            table.responsive-table th,
+            table.responsive-table td,
+            table.responsive-table tr {
+                display: block;
+            }
+            table.responsive-table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            table.responsive-table tr {
+                border: 1px solid var(--border-color);
+                margin-bottom: 0.5rem;
+                background-color: var(--card-background-color);
+            }
+            table.responsive-table td {
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+                position: relative;
+                padding-left: 50% !important; /* Ensure higher specificity if needed */
+                text-align: left;
+                color: var(--text-color);
+            }
+            table.responsive-table td:last-child {
+                border-bottom: none;
+            }
+            table.responsive-table td:before {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 10px;
+                width: calc(50% - 20px);
+                padding-right: 10px;
+                white-space: nowrap;
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--muted-text-color);
+            }
+        }
+    </style>
+</head>
+<body>
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="main-content">
+        <h2 class="mb-3">Manage Users</h2>
+
+        <%- include('../partials/flash-messages') %>
+
+        <% if (users && users.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table responsive-table"> <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Verified</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <% users.forEach(function(u) { %>
+                        <tr>
+                            <td data-label="Username"><%= u.username %></td>
+                            <td data-label="Email"><%= u.email %></td>
+                            <td data-label="Role"><%= u.role %></td>
+                            <td data-label="Verified"><%= u.isVerified ? 'Yes' : 'No' %></td>
+                            <td data-label="Created At"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+                            <td data-label="Actions" class="table-actions">
+                                <a href="/admin/users/<%= u.id %>/edit" class="btn btn-info btn-sm">Edit</a>
+                                <% if (currentUser && currentUser.id.toString() !== u.id.toString()) { %>
+                                    <form action="/admin/users/<%= u.id %>/delete?_csrf=<%= csrfToken %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user: <%= u.username %>? This action cannot be undone.');">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                <% } else { %>
+                                    <button class="btn btn-secondary btn-sm" disabled>Cannot Delete Self</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <p class="text-muted-text-color">No users found.</p>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

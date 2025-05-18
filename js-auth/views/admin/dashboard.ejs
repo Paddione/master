@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .dashboard-greeting {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .dashboard-actions .btn {
+            margin: 5px;
+            min-width: 180px;
+        }
+        .info-card {
+            background-color: var(--secondary-color); /* A slightly different shade from main card */
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-card h3 {
+            margin-top: 0;
+            color: var(--heading-text-color);
+        }
+        .info-card p {
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="main-content">
+        <h2 class="mb-3">Admin Dashboard</h2>
+
+        <%- include('../partials/flash-messages') %>
+
+        <% if (currentUser) { %>
+            <p class="dashboard-greeting">Welcome, <%= currentUser.username %>! (Role: <%= currentUser.role %>)</p>
+        <% } %>
+
+        <p>From this dashboard, you can manage users and other site settings.</p>
+
+        <hr>
+
+        <div class="row">
+            <div class="col-md-6"> <div class="info-card">
+                    <h3>User Management</h3>
+                    <p>View, edit, or delete user accounts.</p>
+                    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-card">
+                    <h3>Site Statistics (Example)</h3>
+                    <p>Total Users: [Count] <br> Active Sessions: [Count]</p>
+                    <a href="#" class="btn btn-info disabled">View Stats (Coming Soon)</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-actions mt-3">
+            <a href="/hall-of-fame" class="btn btn-warning">View Hall of Fame</a>
+            <a href="/play-as-guest" class="btn btn-success">Go to Game</a>
+        </div>
+
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

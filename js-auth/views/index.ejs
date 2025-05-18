@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Additional styles for the welcome page if needed */
+        .welcome-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .welcome-actions a.btn, .welcome-actions form button.btn {
+            margin: 10px;
+            min-width: 200px; /* Give buttons a consistent minimum width */
+        }
+        .welcome-actions {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Space between buttons */
+        }
+
+        /* Styling for a group of primary actions */
+        .primary-actions {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Styling for secondary/alternative actions */
+        .secondary-actions {
+            margin-top: 20px;
+        }
+
+        @media (min-width: 640px) { /* sm breakpoint or similar */
+            .welcome-actions {
+                flex-direction: row; /* Align buttons in a row on larger screens */
+                justify-content: center;
+            }
+            .primary-actions {
+                flex-direction: row;
+            }
+        }
+    </style>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<div class="container">
+    <div class="main-content welcome-container">
+        <h1>Welcome to Quiz Master!</h1>
+        <p class="text-lg text-slate-300 mb-8">
+            Join the fun, test your knowledge, and climb the leaderboards!
+        </p>
+
+        <div class="action-buttons">
+            <div class="primary-actions">
+                <% if (!currentUser) { %>
+                    <a href="/auth/login" class="btn btn-success">Login</a>
+                    <a href="/auth/register" class="btn btn-info">Register</a>
+                <% } else { %>
+                    <a href="/user/dashboard" class="btn btn-primary">Go to Dashboard</a>
+                <% } %>
+            </div>
+
+            <div class="secondary-actions">
+                <a href="/play-as-guest" class="btn btn-secondary">Play as Guest</a>
+
+                <a href="/hall-of-fame" class="btn btn-warning">Hall of Fame</a>
+            </div>
+        </div>
+
+        <%- include('partials/flash-messages') %>
+
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+</body>
+</html>

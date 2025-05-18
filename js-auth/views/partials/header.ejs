@@ -1,0 +1,29 @@
+<header>
+    <div class="container">
+        <div id="branding">
+            <h1><a href="/">Auth Portal</a></h1> </div>
+        <nav>
+            <ul>
+                <% if (currentUser) { %>
+                    <li><a href="/user/dashboard">Dashboard</a></li>
+                    <% if (currentUser.role === 'admin') { %>
+                        <li><a href="/admin/dashboard">Admin</a></li>
+                    <% } %>
+                    <li><a href="/hall-of-fame">Hall of Fame</a></li>
+                    <li><a href="/play-as-guest" class="btn-link-style nav-play-game-btn">Play Game</a></li>
+                    <li>
+                        <form action="/auth/logout" method="GET" style="display: inline;">
+                            <button type="submit" class="btn-link-style">Logout</button>
+                        </form>
+                    </li>
+                <% } else { %>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/auth/login">Login</a></li>
+                    <li><a href="/auth/register">Register</a></li>
+                    <li><a href="/hall-of-fame">Hall of Fame</a></li>
+                    <li><a href="/play-as-guest" class="btn-link-style nav-play-game-btn">Play Game</a></li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+</header>

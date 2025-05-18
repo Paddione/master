@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css"> <style>
+        .hall-of-fame-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #questionSetSelect {
+            margin-bottom: 20px;
+            min-width: 250px; /* Make dropdown wider */
+        }
+        .leaderboard-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            text-align: left;
+            padding: 10px 12px; /* Consistent padding */
+        }
+        .leaderboard-table th {
+            background-color: var(--secondary-hover-color); /* From your style.css */
+        }
+        .leaderboard-table tr:nth-child(even) {
+            background-color: rgba(71, 85, 105, 0.3); /* From your style.css table striping */
+        }
+        .leaderboard-table td.rank {
+            width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .leaderboard-table td.player-name {
+            font-weight: 500;
+        }
+        .leaderboard-table td.score {
+            text-align: right;
+            font-weight: bold;
+            color: var(--primary-color); /* Highlight score */
+        }
+        .loading-message, .no-scores-message {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: var(--muted-text-color);
+        }
+        .pagination-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination-controls button {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<div class="container">
+    <div class="main-content hall-of-fame-container">
+        <h2 class="text-center mb-3">Hall of Fame</h2>
+
+        <%- include('partials/flash-messages') %>
+
+        <div class="form-group">
+            <label for="questionSetSelect">Select Question Set:</label>
+            <select id="questionSetSelect" class="form-control">
+                <option value="">Loading question sets...</option>
+            </select>
+        </div>
+
+        <div id="leaderboardDisplay">
+            <p class="loading-message" id="loadingScoresMsg" style="display: none;">Loading scores...</p>
+            <p class="no-scores-message" id="noScoresMsg" style="display: none;">No scores found for this question set yet, or please select a question set.</p>
+            <table class="leaderboard-table" id="scoresTable" style="display: none;">
+                <thead>
+                <tr>
+                    <th class="rank">Rank</th>
+                    <th class="player-name">Player</th>
+                    <th class="score">Score</th>
+                    <th class="timestamp">Date</th>
+                </tr>
+                </thead>
+                <tbody id="scoresTableBody">
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+            <button id="prevPageBtn" class="btn btn-secondary">&laquo; Previous</button>
+            <span id="currentPageInfo">Page 1 of 1</span>
+            <button id="nextPageBtn" class="btn btn-secondary">Next &raquo;</button>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionSetSelect = document.getElementById('questionSetSelect');
+        const scoresTable = document.getElementById('scoresTable');
+        const scoresTableBody = document.getElementById('scoresTableBody');
+        const loadingScoresMsg = document.getElementById('loadingScoresMsg');
+        const noScoresMsg = document.getElementById('noScoresMsg');
+        const paginationControls = document.getElementById('paginationControls');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const currentPageInfo = document.getElementById('currentPageInfo');
+
+        let currentQuestionSet = '';
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Fetch available question sets for the dropdown
+        fetch('/api/hall-of-fame/questionsets') // Ensure this API endpoint exists and works
+            .then(response => response.json())
+            .then(data => {
+                questionSetSelect.innerHTML = '<option value="">-- Select a Question Set --</option>'; // Default option
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(qSet => {
+                        const option = document.createElement('option');
+                        option.value = qSet;
+                        option.textContent = qSet;
+                        questionSetSelect.appendChild(option);
+                    });
+                } else {
+                    questionSetSelect.innerHTML = '<option value="">No question sets with scores available</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching question sets:', error);
+                questionSetSelect.innerHTML = '<option value="">Error loading sets</option>';
+            });
+
+        // Function to fetch and display scores
+        function fetchScores(questionSet, page = 1) {
+            if (!questionSet) {
+                scoresTable.style.display = 'none';
+                paginationControls.style.display = 'none';
+                noScoresMsg.textContent = 'Please select a question set to view scores.';
+                noScoresMsg.style.display = 'block';
+                loadingScoresMsg.style.display = 'none';
+                return;
+            }
+
+            loadingScoresMsg.style.display = 'block';
+            scoresTable.style.display = 'none';
+            paginationControls.style.display = 'none';
+            noScoresMsg.style.display = 'none';
+            scoresTableBody.innerHTML = ''; // Clear previous scores
+
+            currentQuestionSet = questionSet;
+            currentPage = page;
+
+            fetch(`/api/hall-of-fame/${encodeURIComponent(questionSet)}?page=${page}&limit=10`) // Fetch 10 scores per page
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingScoresMsg.style.display = 'none';
+                    if (data.scores && data.scores.length > 0) {
+                        scoresTable.style.display = 'table'; // Show table
+                        data.scores.forEach((scoreEntry, index) => {
+                            const rank = (data.currentPage - 1) * 10 + index + 1;
+                            const row = scoresTableBody.insertRow();
+                            row.insertCell().textContent = rank;
+                            row.insertCell().textContent = scoreEntry.playerName + (scoreEntry.userId && scoreEntry.userId.username ? ` (${scoreEntry.userId.username})` : '');
+                            row.insertCell().textContent = scoreEntry.score;
+                            row.insertCell().textContent = new Date(scoreEntry.timestamp).toLocaleDateString();
+                            // Add classes for styling
+                            row.cells[0].classList.add('rank');
+                            row.cells[1].classList.add('player-name');
+                            row.cells[2].classList.add('score');
+                            row.cells[3].classList.add('timestamp');
+                        });
+
+                        totalPages = data.totalPages;
+                        currentPageInfo.textContent = `Page ${data.currentPage} of ${totalPages}`;
+                        prevPageBtn.disabled = data.currentPage === 1;
+                        nextPageBtn.disabled = data.currentPage === totalPages;
+                        paginationControls.style.display = totalPages > 1 ? 'block' : 'none';
+
+                    } else {
+                        noScoresMsg.textContent = data.message || 'No scores found for this question set yet.';
+                        noScoresMsg.style.display = 'block';
+                        paginationControls.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching scores:', error);
+                    loadingScoresMsg.style.display = 'none';
+                    noScoresMsg.textContent = 'Error loading scores. Please try again.';
+                    noScoresMsg.style.display = 'block';
+                    scoresTable.style.display = 'none';
+                    paginationControls.style.display = 'none';
+                });
+        }
+
+        // Event listener for dropdown change
+        questionSetSelect.addEventListener('change', function() {
+            fetchScores(this.value, 1); // Fetch page 1 for new selection
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                fetchScores(currentQuestionSet, currentPage - 1);
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                fetchScores(currentQuestionSet, currentPage + 1);
+            }
+        });
+
+        // Initially, show the "select a set" message
+        fetchScores(null);
+    });
+</script>
+</body>
+</html>

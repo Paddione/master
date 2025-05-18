@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+
+<div style="text-align: center;">
+    <h1>Oops! Something Went Wrong</h1>
+    <p><%= message %></p>
+    <% if (error && error.stack && process.env.NODE_ENV === 'development') { %>
+        <pre style="text-align: left; background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; overflow-x: auto;"><%= error.stack %></pre>
+    <% } %>
+    <p><a href="/">Go to Homepage</a></p>
+</div>
+
+<%- include('partials/footer') %>

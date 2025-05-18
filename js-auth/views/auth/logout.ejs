@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .logout-message-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .logout-message-container p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="main-content text-center">
+        <h1>Logged Out Successfully</h1>
+        
+        <div class="logout-message">
+            <p class="text-lg mb-4">Thank you for using our service!</p>
+            
+            <div class="action-buttons">
+                <div class="primary-actions">
+                    <a href="/auth/login" class="btn btn-primary">Log In Again</a>
+                    <a href="/auth/register" class="btn btn-info">Register New Account</a>
+                </div>
+                
+                <div class="secondary-actions mt-4">
+                    <a href="http://game.korczewski.de" class="btn btn-secondary">Play as Guest</a>
+                    <a href="/" class="btn btn-outline">Return to Home</a>
+                </div>
+            </div>
+        </div>
+
+        <%- include('../partials/flash-messages') %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+    <div class="alert alert-success" role="alert">
+        <%= success_msg %>
+    </div>
+<% } %>
+
+<% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+    <div class="alert alert-danger" role="alert">
+        <%= error_msg %>
+    </div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error.length > 0) { %>
+    <div class="alert alert-danger" role="alert">
+        <%= error %>
+    </div>
+<% } %>
+
+<% if (typeof validation_errors !== 'undefined' && validation_errors.length > 0) { %>
+    <div class="alert alert-danger validation-errors-container" role="alert">
+        <p><strong>Please correct the following errors:</strong></p>
+        <ul>
+            <% validation_errors.forEach(function(err) { %>
+                <li><%= err.msg %></li>
+            <% }); %>
+        </ul>
+    </div>
+<% } %>

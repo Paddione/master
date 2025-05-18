@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css"> <style>
+        /* Optional: Additional specific styles for the login page if needed */
+        .login-form-container {
+            max-width: 450px; /* Limit width of the login form for better aesthetics */
+            margin: 0 auto;   /* Center the form container */
+        }
+        .social-login-buttons img {
+            height: 20px; /* Ensure consistent icon size */
+            vertical-align: middle;
+            margin-right: 10px; /* Space between icon and text */
+        }
+        .social-login-buttons .btn {
+            margin-top: 10px; /* Space above social login buttons */
+            display: flex; /* Align icon and text nicely */
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="main-content">
+        <div class="login-form-container">
+            <h2 class="text-center mb-3">Login</h2>
+
+            <%- include('../partials/flash-messages') %>
+
+            <form action="/auth/login" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           value="<%= typeof old_input !== 'undefined' && old_input.email ? old_input.email : '' %>"
+                           placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Login</button> </form>
+
+            <p class="text-center mt-3">
+                <a href="/auth/forgot-password">Forgot Password?</a>
+            </p>
+
+            <% if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) { %>
+                <hr class="my-3"> <p class="text-center text-muted-text-color">Or login with:</p>
+                <div class="social-login-buttons text-center">
+                    <a href="/auth/microsoft" class="btn btn-secondary w-100" style="background-color: #0078D4; border-color: #0078D4; color: white;">
+                        <img src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.png" alt="Microsoft logo">
+                        Login with Microsoft
+                    </a>
+                </div>
+            <% } %>
+
+            <p class="text-center mt-3">
+                Need an account? <a href="/auth/register">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

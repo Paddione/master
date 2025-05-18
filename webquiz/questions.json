@@ -1,0 +1,614 @@
+{
+  "Web_Development_01": [
+    {
+      "question": "Was zeichnet laut der gegebenen Definition ein Multimedia-System aus?",
+      "options": [
+        "Seine Fähigkeit, nur Videodateien abzuspielen.",
+        "Sein Fokus ausschließlich auf Text- und Bildverarbeitung.",
+        "Seine Fähigkeit, verschiedene digitale Medientypen zu erzeugen, zu bearbeiten, zu speichern, zu transportieren und zu präsentieren.",
+        "Seine Anforderung, nur analoge Eingabegeräte zu verwenden."
+      ],
+      "answer": "Seine Fähigkeit, verschiedene digitale Medientypen zu erzeugen, zu bearbeiten, zu speichern, zu transportieren und zu präsentieren."
+    },
+    {
+      "question": "Was ist die primäre Einschränkung des menschlichen Auges, die bei der Gestaltung visueller Multimedia-Inhalte berücksichtigt werden sollte?",
+      "options": [
+        "Unfähigkeit, die Farbe Blau wahrzunehmen.",
+        "Schwierigkeit, mehr als 100 Farben zu unterscheiden.",
+        "Reduzierte Empfindlichkeit für Farbunterschiede bei gesättigten Farben und Probleme mit spezifischen Farbkombinationen (z.B. reines Blau für kleine Formen).",
+        "Perfekte Wahrnehmung aller Farbkombinationen gleichermaßen."
+      ],
+      "answer": "Reduzierte Empfindlichkeit für Farbunterschiede bei gesättigten Farben und Probleme mit spezifischen Farbkombinationen (z.B. reines Blau für kleine Formen)."
+    },
+    {
+      "question": "Welcher Prozess wandelt die kontinuierliche Amplitude (Y-Achse) eines analogen Signals in diskrete digitale Werte um?",
+      "options": [
+        "Abtastung (Sampling)",
+        "Quantisierung",
+        "Modulation",
+        "Filterung"
+      ],
+      "answer": "Quantisierung"
+    },
+    {
+      "question": "Was war die primäre Einschränkung des ursprünglichen 7-Bit-ASCII-Codes, die zu länderspezifischen Anpassungen führte?",
+      "options": [
+        "Er enthielt zu viele nicht druckbare Zeichen.",
+        "Er konnte keine Zahlen darstellen.",
+        "Es fehlten Zeichen, die für andere Sprachen als Englisch benötigt wurden (z.B. Umlaute, Akzente).",
+        "Er benötigte zu viel Speicherplatz."
+      ],
+      "answer": "Es fehlten Zeichen, die für andere Sprachen als Englisch benötigt wurden (z.B. Umlaute, Akzente)."
+    },
+    {
+      "question": "Was ist das Kernprinzip hinter der Effektivität der MP3-Audiokompression?",
+      "options": [
+        "Verlustfreie Speicherung von Audiodaten mittels Huffman-Kodierung.",
+        "Signifikante Erhöhung der Abtastrate.",
+        "Entfernung von für das menschliche Ohr nicht wahrnehmbaren Frequenzen mithilfe eines psychoakustischen Modells.",
+        "Umwandlung von Stereo-Audio in Mono."
+      ],
+      "answer": "Entfernung von für das menschliche Ohr nicht wahrnehmbaren Frequenzen mithilfe eines psychoakustischen Modells."
+    },
+    {
+      "question": "Wie unterscheidet sich MIDI grundlegend von Audioformaten wie MP3 oder WAV?",
+      "options": [
+        "MIDI speichert hochauflösende analoge Schallwellen.",
+        "MIDI speichert Anweisungen zur Steuerung digitaler Instrumente (Noten, Timing, Anschlagstärke), nicht den tatsächlichen Klang.",
+        "MIDI-Dateien sind deutlich größer als MP3-Dateien.",
+        "MIDI wird hauptsächlich für Video-Soundtracks verwendet."
+      ],
+      "answer": "MIDI speichert Anweisungen zur Steuerung digitaler Instrumente (Noten, Timing, Anschlagstärke), nicht den tatsächlichen Klang."
+    },
+    {
+      "question": "Welche Farbe ergibt sich im additiven RGB-Farbmodell durch die Kombination von rotem, grünem und blauem Licht bei maximaler Intensität?",
+      "options": [
+        "Schwarz",
+        "Weiß",
+        "Cyan",
+        "Magenta"
+      ],
+      "answer": "Weiß"
+    },
+    {
+      "question": "Warum enthalten CMYK-Drucker oft eine separate schwarze (K) Tintenpatrone?",
+      "options": [
+        "Um Farben heller zu machen.",
+        "Weil das Mischen von C, M und Y Grau ergibt, nicht echtes Schwarz, und um farbige Tinte zu sparen.",
+        "Um das Drucken auf dunklem Papier zu ermöglichen.",
+        "Schwarze Tinte ist billiger als farbige Tinten."
+      ],
+      "answer": "Weil das Mischen von C, M und Y Grau ergibt, nicht echtes Schwarz, und um farbige Tinte zu sparen."
+    },
+    {
+      "question": "Was ist ein Hauptvorteil von Vektorgrafiken gegenüber Pixelgrafiken (Rastergrafiken)?",
+      "options": [
+        "Vektorgrafiken eignen sich besser zur Darstellung fotografischer Bilder.",
+        "Vektorgrafiken verlieren beim Vergrößern deutlich an Qualität.",
+        "Vektorgrafiken können ohne Qualitätsverlust auf jede Größe skaliert werden, da sie durch mathematische Gleichungen definiert sind.",
+        "Vektorgrafiken benötigen mehr Speicherplatz für einfache Formen."
+      ],
+      "answer": "Vektorgrafiken können ohne Qualitätsverlust auf jede Größe skaliert werden, da sie durch mathematische Gleichungen definiert sind."
+    },
+    {
+      "question": "Welcher JPEG-Modus ermöglicht die progressive Anzeige eines Bildes, beginnend mit einer unscharfen Darstellung, die allmählich schärfer wird, was bei langsamen Verbindungen nützlich ist?",
+      "options": [
+        "Sequenzieller Modus (Baseline System)",
+        "Progressiver Modus (Extended System)",
+        "Hierarchischer Modus",
+        "Verlustfreier Modus"
+      ],
+      "answer": "Progressiver Modus (Extended System)"
+    }
+  ],
+  "Web_Development_02": [
+    {
+      "question": "Welcher Schnittstellentyp wird typischerweise durch den Standard IEEE 802.11 spezifiziert?",
+      "options": [
+        "Kabelgebundenes Ethernet (RJ45)",
+        "Drahtloses lokales Netzwerk (WLAN)",
+        "Universal Serial Bus (USB)",
+        "High-Definition Multimedia Interface (HDMI)"
+      ],
+      "answer": "Drahtloses lokales Netzwerk (WLAN)"
+    },
+    {
+      "question": "Was davon wird typischerweise NICHT als Software-Schnittstelle für die Interprozesskommunikation (IPC) betrachtet?",
+      "options": [
+        "TCP/UDP Sockets",
+        "Remote Procedure Calls (RPC)",
+        "HDMI-Anschlussbelegung",
+        "Java Database Connectivity (JDBC)"
+      ],
+      "answer": "HDMI-Anschlussbelegung"
+    },
+    {
+      "question": "Was ist ein primärer physikalischer Unterschied zwischen den im Diagramm gezeigten USB 2.0 Typ-A/B- und USB 3.0 Typ-A/B-Anschlüssen?",
+      "options": [
+        "USB 3.0-Anschlüsse sind immer kleiner.",
+        "USB 3.0-Anschlüsse haben zusätzliche Pins (normalerweise blau gefärbt) für höhere Geschwindigkeiten.",
+        "USB 2.0-Anschlüsse verwenden Glasfaser.",
+        "USB 3.0-Anschlüsse unterstützen nur die Stromversorgung, keine Daten."
+      ],
+      "answer": "USB 3.0-Anschlüsse haben zusätzliche Pins (normalerweise blau gefärbt) für höhere Geschwindigkeiten."
+    },
+    {
+      "question": "Welche Technologie ermöglicht die Benutzerinteraktion direkt auf der Displayoberfläche, wie sie bei Smartphones und Tablets üblich ist?",
+      "options": [
+        "QWERTZ-Tastatur",
+        "Optische Maus",
+        "Touchscreen",
+        "Trackball"
+      ],
+      "answer": "Touchscreen"
+    },
+    {
+      "question": "Was ist das Hauptmerkmal eines 'asymmetrischen' Kodierungsverfahrens?",
+      "options": [
+        "Kodierung und Dekodierung dauern ungefähr gleich lang.",
+        "Die Dekodierung dauert deutlich länger als die Kodierung.",
+        "Die Kodierung dauert deutlich länger als die Dekodierung.",
+        "Es kann nur für Textdaten verwendet werden."
+      ],
+      "answer": "Die Kodierung dauert deutlich länger als die Dekodierung."
+    },
+    {
+      "question": "Was misst die Shannon-Entropie H(A) eines Alphabets A?",
+      "options": [
+        "Die physische Größe der Zeichen im Alphabet.",
+        "Die maximal zulässige Anzahl von Zeichen im Alphabet.",
+        "Den durchschnittlichen Informationsgehalt pro Zeichen im Alphabet unter Berücksichtigung der Wahrscheinlichkeiten.",
+        "Die während der Kanalcodierung hinzugefügte Redundanz."
+      ],
+      "answer": "Den durchschnittlichen Informationsgehalt pro Zeichen im Alphabet unter Berücksichtigung der Wahrscheinlichkeiten."
+    },
+    {
+      "question": "Welche verlustfreie Kompressionstechnik weist häufiger vorkommenden Zeichen/Symbolen kürzere Bitfolgen zu?",
+      "options": [
+        "Lauflängenkodierung (RLE)",
+        "Stringersatzcodierung (Wörterbuchkomprimierung)",
+        "Entropiecodierung (z.B. Huffman, Morse)",
+        "Quantisierung"
+      ],
+      "answer": "Entropiecodierung (z.B. Huffman, Morse)"
+    },
+    {
+      "question": "Was ist das grundlegende Prinzip hinter der verlustbehafteten Kompression?",
+      "options": [
+        "Daten werden so komprimiert, dass eine perfekte Rekonstruktion des Originals möglich ist.",
+        "Daten werden mit einem geheimen Schlüssel verschlüsselt.",
+        "Daten werden irreversibel reduziert, indem Informationen entfernt werden, die für Menschen als weniger wahrnehmbar gelten.",
+        "Daten werden dupliziert, um Redundanz zu gewährleisten."
+      ],
+      "answer": "Daten werden irreversibel reduziert, indem Informationen entfernt werden, die für Menschen als weniger wahrnehmbar gelten."
+    },
+    {
+      "question": "Was ist ein wesentlicher Vorteil von Solid State Drives (SSDs) gegenüber herkömmlichen magnetischen Festplattenlaufwerken (HDDs)?",
+      "options": [
+        "SSDs verwenden rotierende Platten zur Datenspeicherung.",
+        "SSDs sind im Allgemeinen pro Gigabyte günstiger.",
+        "SSDs haben keine beweglichen Teile und bieten daher höhere Geschwindigkeit, Robustheit und geringeren Stromverbrauch.",
+        "SSDs haben eine viel geringere maximale Speicherkapazität."
+      ],
+      "answer": "SSDs haben keine beweglichen Teile und bieten daher höhere Geschwindigkeit, Robustheit und geringeren Stromverbrauch."
+    },
+    {
+      "question": "Welche Displaytechnologie verwendet selbstleuchtende organische Dioden, wodurch eine separate Hintergrundbeleuchtung überflüssig wird?",
+      "options": [
+        "TFT-LCD (Thin-Film Transistor - Liquid Crystal Display)",
+        "Plasma-Display",
+        "AMOLED (Active-Matrix Organic Light Emitting Diode)",
+        "CRT (Kathodenstrahlröhre)"
+      ],
+      "answer": "AMOLED (Active-Matrix Organic Light Emitting Diode)"
+    }
+  ],
+  "Web_Development_03": [
+    {
+      "question": "Welche Entität initiiert im Client-Server-Modell typischerweise die Kommunikation durch Senden einer Anfrage?",
+      "options": [
+        "Der Server",
+        "Der Client",
+        "Der Netzwerk-Router",
+        "Client und Server gleichzeitig"
+      ],
+      "answer": "Der Client"
+    },
+    {
+      "question": "Welche HTTP-Methode wird im Allgemeinen bevorzugt, um große Datenmengen oder Daten zu senden, die nicht in der URL sichtbar sein sollen?",
+      "options": [
+        "GET",
+        "POST",
+        "HEAD",
+        "OPTIONS"
+      ],
+      "answer": "POST"
+    },
+    {
+      "question": "Was repräsentiert '#results' in der URI 'https://example.com/search?query=test#results'?",
+      "options": [
+        "Schema",
+        "Authority",
+        "Query",
+        "Fragment"
+      ],
+      "answer": "Fragment"
+    },
+    {
+      "question": "Was ist der Hauptunterschied zwischen einer URL (Uniform Resource Locator) und einem URN (Uniform Resource Name)?",
+      "options": [
+        "URL identifiziert, URN lokalisiert.",
+        "URL gibt an, wie zugegriffen wird (Ort), URN bietet einen persistenten, ortsunabhängigen Namen.",
+        "URN wird für Bilder verwendet, URL für Text.",
+        "Es handelt sich um identische Konzepte."
+      ],
+      "answer": "URL gibt an, wie zugegriffen wird (Ort), URN bietet einen persistenten, ortsunabhängigen Namen."
+    },
+    {
+      "question": "Warum wird HTML als Auszeichnungssprache und nicht als Programmiersprache betrachtet?",
+      "options": [
+        "Weil es komplexe Berechnungen durchführen kann.",
+        "Weil es Tags verwendet, um Inhalte zu strukturieren und zu beschreiben, anstatt Logik oder Algorithmen zu definieren.",
+        "Weil es einen Compiler zum Ausführen benötigt.",
+        "Weil es nur auf Servern verwendet werden kann."
+      ],
+      "answer": "Weil es Tags verwendet, um Inhalte zu strukturieren und zu beschreiben, anstatt Logik oder Algorithmen zu definieren."
+    },
+    {
+      "question": "Welche Schicht ist gemäß dem Vergleich der OSI- und TCP/IP-Modelle für das HTTP-Protokoll verantwortlich?",
+      "options": [
+        "Netzzugang (Network Access)",
+        "Internet",
+        "Transport",
+        "Anwendung (Application)"
+      ],
+      "answer": "Anwendung (Application)"
+    },
+    {
+      "question": "Was ist ein primärer Vorteil der Verwendung von XML Schema (XSD) gegenüber Document Type Definition (DTD) zur Definition der XML-Dokumentstruktur?",
+      "options": [
+        "DTD verwendet XML-Syntax, während XSD dies nicht tut.",
+        "XSD unterstützt einen reichhaltigeren Satz von Datentypen für Elemente und Attribute.",
+        "DTD ist einfacher für die Definition komplexer Strukturen.",
+        "XSD-Dateien sind typischerweise kleiner als DTD-Dateien."
+      ],
+      "answer": "XSD unterstützt einen reichhaltigeren Satz von Datentypen für Elemente und Attribute."
+    },
+    {
+      "question": "Welches HTML-Tag wird verwendet, um eine nummerierte Liste zu erstellen?",
+      "options": [
+        "<ul>",
+        "<li>",
+        "<dl>",
+        "<ol>"
+      ],
+      "answer": "<ol>"
+    },
+    {
+      "question": "Was ist der Zweck des `alt`-Attributs innerhalb eines `<img>`-Tags?",
+      "options": [
+        "Die Bildausrichtung festzulegen.",
+        "Alternativtext bereitzustellen, der das Bild beschreibt (für Barrierefreiheit und falls das Bild nicht geladen werden kann).",
+        "Die Quell-URL des Bildes zu definieren.",
+        "Die Bildabmessungen festzulegen."
+      ],
+      "answer": "Alternativtext bereitzustellen, der das Bild beschreibt (für Barrierefreiheit und falls das Bild nicht geladen werden kann)."
+    },
+    {
+      "question": "Welches neue HTML5-Element ist speziell dafür vorgesehen, den zentralen Hauptinhalt eines Dokuments zu enthalten, ausgenommen Kopfzeilen, Fußzeilen und Seitenleisten?",
+      "options": [
+        "<section>",
+        "<article>",
+        "<div>",
+        "<main>"
+      ],
+      "answer": "<main>"
+    }
+  ],
+  "Web_Development_04": [
+    {
+      "question": "Was ist das Hauptziel von 'Cascading' (Kaskadierung) in CSS?",
+      "options": [
+        "Sicherzustellen, dass alle Stile zufällig angewendet werden.",
+        "Eine Hierarchie und Regeln zur Auflösung widersprüchlicher Stil-Deklarationen zu definieren, wodurch Stile vererbt und überschrieben werden können.",
+        "Stile nur auf das erste Element einer Seite anzuwenden.",
+        "CSS automatisch in JavaScript umzuwandeln."
+      ],
+      "answer": "Eine Hierarchie und Regeln zur Auflösung widersprüchlicher Stil-Deklarationen zu definieren, wodurch Stile vererbt und überschrieben werden können."
+    },
+    {
+      "question": "Welche Stil-Deklaration hat gemäß den CSS-Prioritätsregeln (Kaskadierungsreihenfolge) typischerweise die höchste Priorität?",
+      "options": [
+        "Standard-Stylesheet des Browsers.",
+        "Externes Stylesheet, das über `<link>` eingebunden ist.",
+        "Interne Stile, die im `<head>` mit `<style>`-Tags definiert sind.",
+        "Inline-Stile, die direkt auf ein Element über das `style`-Attribut angewendet werden."
+      ],
+      "answer": "Inline-Stile, die direkt auf ein Element über das `style`-Attribut angewendet werden."
+    },
+    {
+      "question": "Was zielt 'Responsive Web Design' hauptsächlich darauf ab, mithilfe von CSS zu erreichen?",
+      "options": [
+        "Websites schneller laden zu lassen.",
+        "Sicherzustellen, dass Websites auf einer Vielzahl von Geräten und Bildschirmgrößen gut aussehen und funktionieren.",
+        "Website-Inhalte automatisch zu übersetzen.",
+        "Komplexe Animationen zu Websites hinzuzufügen."
+      ],
+      "answer": "Sicherzustellen, dass Websites auf einer Vielzahl von Geräten und Bildschirmgrößen gut aussehen und funktionieren."
+    },
+    {
+      "question": "Welcher CSS-Selektor zielt auf ein HTML-Element mit der spezifischen ID 'main-content'?",
+      "options": [
+        ".main-content",
+        "main-content",
+        "#main-content",
+        "*main-content"
+      ],
+      "answer": "#main-content"
+    },
+    {
+      "question": "Welche Eigenschaft definiert im CSS Box Model den Raum *außerhalb* des Rahmens, der das Element von anderen Elementen trennt?",
+      "options": [
+        "padding (Innenabstand)",
+        "border (Rahmen)",
+        "margin (Außenabstand)",
+        "content (Inhalt)"
+      ],
+      "answer": "margin (Außenabstand)"
+    },
+    {
+      "question": "Welcher Typ von CSS-Einheit wird im Allgemeinen für die Erstellung flexibler und responsiver Layouts bevorzugt, da er relativ zu einem anderen Wert skaliert (wie der Größe des Elternelements oder der Viewport-Größe)?",
+      "options": [
+        "Absolute Einheiten (z.B. cm, pt, fester px-Wert)",
+        "Relative Einheiten (z.B. %, em, rem, vw)",
+        "Farbeinheiten (z.B. #FF0000)",
+        "Zeiteinheiten (z.B. s, ms)"
+      ],
+      "answer": "Relative Einheiten (z.B. %, em, rem, vw)"
+    },
+    {
+      "question": "Was ist der Unterschied zwischen den Operatoren `==` und `===` in JavaScript?",
+      "options": [
+        "`==` vergleicht nur den Wert, `===` vergleicht nur den Typ.",
+        "`==` führt eine Typumwandlung durch, bevor die Werte verglichen werden, `===` vergleicht sowohl Wert als auch Typ ohne Typumwandlung.",
+        "`===` wird für Zuweisungen verwendet, `==` für Vergleiche.",
+        "Sie sind funktional identisch."
+      ],
+      "answer": "`==` führt eine Typumwandlung durch, bevor die Werte verglichen werden, `===` vergleicht sowohl Wert als auch Typ ohne Typumwandlung."
+    },
+    {
+      "question": "Was bedeutet 'Hoisting' in JavaScript?",
+      "options": [
+        "JavaScript-Code läuft schneller.",
+        "Variablen- und Funktionsdeklarationen werden konzeptionell an den Anfang ihres Geltungsbereichs verschoben, bevor der Code ausgeführt wird.",
+        "Fehler werden automatisch korrigiert.",
+        "CSS-Stile werden angewendet, bevor HTML geladen wird."
+      ],
+      "answer": "Variablen- und Funktionsdeklarationen werden konzeptionell an den Anfang ihres Geltungsbereichs verschoben, bevor der Code ausgeführt wird."
+    },
+    {
+      "question": "Was ist das Document Object Model (DOM)?",
+      "options": [
+        "Ein JavaScript-Framework für Animationen.",
+        "Eine Programmierschnittstelle für HTML- und XML-Dokumente, die die Seitenstruktur als Baum von Objekten darstellt, die von Skripten manipuliert werden können.",
+        "Ein CSS-Präprozessor.",
+        "Eine serverseitige Datenbank."
+      ],
+      "answer": "Eine Programmierschnittstelle für HTML- und XML-Dokumente, die die Seitenstruktur als Baum von Objekten darstellt, die von Skripten manipuliert werden können."
+    },
+    {
+      "question": "Wie hängen Sie eine Funktion an, die ausgeführt werden soll, wenn auf eine Schaltfläche mit der ID 'myButton' geklickt wird, unter Verwendung von modernem JavaScript?",
+      "options": [
+        "<button id='myButton' onclick='myFunction()'>",
+        "$('#myButton').click(myFunction);",
+        "document.getElementById('myButton').addEventListener('click', myFunction);",
+        "button#myButton { event: click myFunction; }"
+      ],
+      "answer": "document.getElementById('myButton').addEventListener('click', myFunction);"
+    }
+  ],
+  "Web_Development_05": [
+    {
+      "question": "Warum ist Session Management für Webanwendungen entscheidend, da HTTP ein zustandsloses Protokoll ist?",
+      "options": [
+        "Um Webseiten schneller laden zu lassen.",
+        "Damit sich der Server über mehrere Anfragen hinweg an einen bestimmten Benutzer und dessen Daten (wie Login-Status oder Warenkorb) erinnern kann.",
+        "Um Bilder automatisch zu komprimieren.",
+        "Um HTML-Code zu validieren."
+      ],
+      "answer": "Damit sich der Server über mehrere Anfragen hinweg an einen bestimmten Benutzer und dessen Daten (wie Login-Status oder Warenkorb) erinnern kann."
+    },
+    {
+      "question": "Wogegen spricht sich das DRY-Prinzip ('Don't Repeat Yourself' - Wiederhole dich nicht) in der Softwareentwicklung aus?",
+      "options": [
+        "Das Schreiben von Kommentaren im Code.",
+        "Die Verwendung von Funktionen und Methoden.",
+        "Redundanten Code oder Logik, die an mehreren Stellen kopiert wird.",
+        "Das gründliche Testen von Software."
+      ],
+      "answer": "Redundanten Code oder Logik, die an mehreren Stellen kopiert wird."
+    },
+    {
+      "question": "Was ist die Hauptverantwortung der 'View' im Model-View-Controller (MVC) Architekturmuster?",
+      "options": [
+        "Verarbeitung von Benutzereingaben und Anwendungsfluss.",
+        "Verwaltung von Daten und Geschäftslogik.",
+        "Präsentation von Daten für den Benutzer (die Benutzeroberfläche).",
+        "Verbindung zur Datenbank."
+      ],
+      "answer": "Präsentation von Daten für den Benutzer (die Benutzeroberfläche)."
+    },
+    {
+      "question": "Was unterscheidet eine 4-Tier-Architektur von einer 3-Tier-Architektur gemäß der Beschreibung in den Folien?",
+      "options": [
+        "Die 4-Tier-Architektur kombiniert Webserver und Anwendungsserver.",
+        "Die 4-Tier-Architektur fügt einen dedizierten Anwendungsserver zwischen Webserver und Datenbankserver hinzu.",
+        "Die 4-Tier-Architektur entfernt den Datenbankserver.",
+        "Die 4-Tier-Architektur verwendet nur clientseitige Verarbeitung."
+      ],
+      "answer": "Die 4-Tier-Architektur fügt einen dedizierten Anwendungsserver zwischen Webserver und Datenbankserver hinzu."
+    },
+    {
+      "question": "Welches Python-Webframework wird als auf dem MVC-Muster basierend erwähnt?",
+      "options": [
+        "Flask",
+        "Pyramid",
+        "Django und web2py",
+        "Bottle"
+      ],
+      "answer": "Django und web2py"
+    },
+    {
+      "question": "Wofür wird 'Active Record' im Kontext von Ruby on Rails hauptsächlich verwendet?",
+      "options": [
+        "Definition der Benutzeroberfläche.",
+        "Verarbeitung von HTTP-Anfragen.",
+        "Objektrelationale Abbildung (ORM) - Verwaltung der Zuordnung zwischen Anwendungsobjekten und relationalen Datenbanktabellen.",
+        "Verwaltung der Serverkonfiguration."
+      ],
+      "answer": "Objektrelationale Abbildung (ORM) - Verwaltung der Zuordnung zwischen Anwendungsobjekten und relationalen Datenbanktabellen."
+    },
+    {
+      "question": "Wofür wird XAMPP hauptsächlich verwendet?",
+      "options": [
+        "Ein Texteditor für die Webentwicklung.",
+        "Ein Versionskontrollsystem wie Git.",
+        "Ein Softwarepaket, das einen Apache-Webserver, eine Datenbank (MariaDB/MySQL) und Interpreter für PHP und Perl für die lokale Entwicklung bereitstellt.",
+        "Eine Cloud-Hosting-Plattform."
+      ],
+      "answer": "Ein Softwarepaket, das einen Apache-Webserver, eine Datenbank (MariaDB/MySQL) und Interpreter für PHP und Perl für die lokale Entwicklung bereitstellt."
+    },
+    {
+      "question": "Was ist ein Hauptunterschied zwischen den Model-1- und Model-2-Architekturen im Kontext von Java Servlets/JSP?",
+      "options": [
+        "Model-1 verwendet nur Servlets, Model-2 nur JSPs.",
+        "Model-1 vermischt oft Logik und Präsentation innerhalb von JSPs, während Model-2 eine bessere Trennung fördert, indem Servlets als Controller und JSPs hauptsächlich für Views verwendet werden.",
+        "Model-2 ist älter und weniger effizient als Model-1.",
+        "Model-1 erfordert einen Anwendungsserver, Model-2 nicht."
+      ],
+      "answer": "Model-1 vermischt oft Logik und Präsentation innerhalb von JSPs, während Model-2 eine bessere Trennung fördert, indem Servlets als Controller und JSPs hauptsächlich für Views verwendet werden."
+    },
+    {
+      "question": "Was unterscheidet die Handhabung gleichzeitiger Anfragen durch Node.js von traditionellen Multi-Threaded-Servern (wie Apache mit PHP oder Tomcat mit Servlets)?",
+      "options": [
+        "Node.js erstellt für jede einzelne Anfrage einen neuen Thread.",
+        "Node.js verwendet ein Single-Threaded, ereignisgesteuertes, nicht-blockierendes I/O-Modell, um viele Anfragen gleichzeitig zu bearbeiten, ohne viele Threads zu erstellen.",
+        "Node.js kann nicht mehr als eine Anfrage gleichzeitig bearbeiten.",
+        "Node.js benötigt deutlich mehr Speicher pro Verbindung als Threaded-Server."
+      ],
+      "answer": "Node.js verwendet ein Single-Threaded, ereignisgesteuertes, nicht-blockierendes I/O-Modell, um viele Anfragen gleichzeitig zu bearbeiten, ohne viele Threads zu erstellen."
+    },
+    {
+      "question": "Welche Rolle spielt 'npm' (Node Package Manager) im Node.js-Ökosystem?",
+      "options": [
+        "Es ist die von Node.js verwendete JavaScript-Engine.",
+        "Es ist ein Werkzeug zur Verwaltung und Installation wiederverwendbarer Code-Pakete (Bibliotheken/Module) für Node.js-Projekte.",
+        "Es ist ein Webserver speziell für Node.js.",
+        "Es ist ein Datenbanksystem, das in Node.js integriert ist."
+      ],
+      "answer": "Es ist ein Werkzeug zur Verwaltung und Installation wiederverwendbarer Code-Pakete (Bibliotheken/Module) für Node.js-Projekte."
+    }
+  ],
+  "Web_Development_06": [
+    {
+      "question": "Welche Komponente wird bei der Verwendung von XAMPP typischerweise zur Verwaltung der MySQL/MariaDB-Datenbank über eine Weboberfläche verwendet?",
+      "options": [
+        "Apache HTTP Server",
+        "Tomcat Server",
+        "phpMyAdmin",
+        "Perl Interpreter"
+      ],
+      "answer": "phpMyAdmin"
+    },
+    {
+      "question": "Welche Methode wird in einem Java Servlet typischerweise überschrieben, um HTTP GET-Anfragen zu behandeln?",
+      "options": [
+        "service()",
+        "init()",
+        "doPost()",
+        "doGet()"
+      ],
+      "answer": "doGet()"
+    },
+    {
+      "question": "Was ist der Hauptzweck der Annotation `@WebServlet(\"/pfad\")` in einem Java Servlet?",
+      "options": [
+        "Notwendige Java-Pakete zu importieren.",
+        "Die Datenbankverbindungszeichenfolge zu definieren.",
+        "Das Servlet einem spezifischen URL-Pfad zuzuordnen, um es über den Webserver zugänglich zu machen.",
+        "Die erforderliche Java-Version anzugeben."
+      ],
+      "answer": "Das Servlet einem spezifischen URL-Pfad zuzuordnen, um es über den Webserver zugänglich zu machen."
+    },
+    {
+      "question": "Wie werden Java-Code-Schnipsel typischerweise in eine JSP-Datei eingebettet?",
+      "options": [
+        "Mit `<java> ... </java>` Tags.",
+        "Mit Scriptlets `<% ... %>`, Ausdrücken `<%= ... %>` oder Deklarationen `<%! ... %>`.",
+        "Mit `<?java ... ?>` Tags.",
+        "Durch Verlinken einer externen .java-Datei mittels `<link>`."
+      ],
+      "answer": "Mit Scriptlets `<% ... %>`, Ausdrücken `<%= ... %>` oder Deklarationen `<%! ... %>`."
+    },
+    {
+      "question": "Wie wird in Servlets und JSPs typischerweise serverseitig auf Parameter zugegriffen, die von einem HTML-Formular gesendet wurden (z.B. über GET oder POST)?",
+      "options": [
+        "Mit `session.getParameter(\"paramName\")`",
+        "Mit `request.getParameter(\"paramName\")` (oder `req.getParameter` in Servlets)",
+        "Mit `response.getParameter(\"paramName\")`",
+        "Parameter sind automatisch als globale Variablen verfügbar."
+      ],
+      "answer": "Mit `request.getParameter(\"paramName\")` (oder `req.getParameter` in Servlets)"
+    },
+    {
+      "question": "Welches Objekt wird üblicherweise in Servlets/JSP verwendet, um benutzerspezifische Daten über mehrere Anfragen hinweg zu speichern (Session Management)?",
+      "options": [
+        "HttpServletRequest",
+        "HttpServletResponse",
+        "ServletContext",
+        "HttpSession"
+      ],
+      "answer": "HttpSession"
+    },
+    {
+      "question": "Was stellt JDBC (Java Database Connectivity) hauptsächlich bereit?",
+      "options": [
+        "Einen Webserver.",
+        "Eine standardisierte Java-API zur Verbindung mit und Interaktion mit Datenbanken.",
+        "Eine JavaScript-Bibliothek für UI-Elemente.",
+        "Ein objektrelationales Mapping (ORM) Framework."
+      ],
+      "answer": "Eine standardisierte Java-API zur Verbindung mit und Interaktion mit Datenbanken."
+    },
+    {
+      "question": "Was bedeutet 'nicht-blockierendes I/O' (non-blocking I/O) im Kontext von Node.js?",
+      "options": [
+        "Node.js verhindert jegliche Ein-/Ausgabeoperationen.",
+        "Node.js-Operationen (wie das Lesen von Dateien oder Netzwerkanfragen) halten die Ausführung anderen Codes nicht an; das Programm läuft weiter und behandelt das Ergebnis später über Callbacks oder Promises.",
+        "Node.js kann nur eine I/O-Operation gleichzeitig durchführen.",
+        "Node.js blockiert standardmäßig den gesamten Netzwerkverkehr."
+      ],
+      "answer": "Node.js-Operationen (wie das Lesen von Dateien oder Netzwerkanfragen) halten die Ausführung anderen Codes nicht an; das Programm läuft weiter und behandelt das Ergebnis später über Callbacks oder Promises."
+    },
+    {
+      "question": "Was ist ein Hauptvorteil der Verwendung von WebSockets (ermöglicht durch Bibliotheken wie 'ws' in Node.js) im Vergleich zu traditionellen HTTP-Anfragen für Echtzeitkommunikation?",
+      "options": [
+        "WebSockets sind langsamer, aber sicherer.",
+        "WebSockets erlauben nur dem Client, Daten an den Server zu senden.",
+        "WebSockets bieten einen persistenten, bidirektionalen Kommunikationskanal, der es dem Server ermöglicht, Daten ohne neue Anfrage an den Client zu pushen.",
+        "WebSockets können nur Textdaten übertragen."
+      ],
+      "answer": "WebSockets bieten einen persistenten, bidirektionalen Kommunikationskanal, der es dem Server ermöglicht, Daten ohne neue Anfrage an den Client zu pushen."
+    },
+    {
+      "question": "Welche Technologie, JSP/Servlets oder Node.js, wird im Allgemeinen als potenziell schneller im Entwicklungszyklus angesehen, insbesondere für Prototypen, aufgrund ihrer Sprache (JavaScript) und ihres Ökosystems (npm)?",
+      "options": [
+        "JSP/Servlets",
+        "Node.js",
+        "Beide sind gleich schnell.",
+        "Keine von beiden eignet sich für schnelles Prototyping."
+      ],
+      "answer": "Node.js"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+<nav>
+    <ul>
+        <% if (currentUser) { %>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <% if (currentUser.role === 'admin') { %>
+                <li><a href="/admin/users">Manage Users</a></li>
+            <% } %>
+            <li><a href="/user/change-password">Change Password</a></li>
+            <li>
+                <form action="/auth/logout?_csrf=<%= csrfToken %>" method="POST" style="display:inline;">
+                     <button type="submit" class="btn-link-style">Logout</button>
+                </form>
+            </li>
+        <% } else { %>
+            <li><a href="/auth/login">Login</a></li>
+            <li><a href="/auth/register">Register</a></li>
+        <% } %>
+    </ul>
+</nav>
+<style>
+    .btn-link-style {
+        background: none;
+        border: none;
+        color: white; /* Or your header link color */
+        text-decoration: none; /* Or underline if your links are underlined */
+        cursor: pointer;
+        padding: 0;
+        font-size: 16px; /* Match other nav link font size */
+        text-transform: uppercase; /* Match other nav link case */
+        font-family: inherit; /* Match other nav link font family */
+    }
+    .btn-link-style:hover {
+        text-decoration: underline; /* Or your link hover effect */
+    }
+</style>
