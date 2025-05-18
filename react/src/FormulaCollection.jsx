@@ -1,343 +1,274 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
 
 const FormulaCollection = () => {
+    const [activeCategory, setActiveCategory] = useState('informationstheorie');
+
+    // Configuration for MathJax
+    const config = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+
+    // Formula categories and their formulas
+    const formulaCategories = {
+        informationstheorie: {
+            name: 'Informationstheorie',
+            formulas: [
+                {
+                    name: 'Informationsgehalt (Einzelzeichen)',
+                    formula: '$$I(x_i) = \\log_2 \\frac{1}{p(x_i)} = -\\log_2 p(x_i)$$',
+                    description: 'Der Informationsgehalt eines Zeichens $x_i$ ist abhängig von seiner Wahrscheinlichkeit $p(x_i)$. Je unwahrscheinlicher ein Zeichen, desto höher sein Informationsgehalt.',
+                    unit: 'Bit'
+                },
+                {
+                    name: 'Entropie (Mittlerer Informationsgehalt)',
+                    formula: '$$H(X) = -\\sum_{i=1}^{m} p(x_i) \\cdot \\log_2 p(x_i)$$',
+                    description: 'Die Entropie beschreibt den mittleren Informationsgehalt einer Quelle mit Zeichenvorrat $X = \\{x_1, x_2, ..., x_m\\}$ und den Wahrscheinlichkeiten $p(x_i)$.',
+                    unit: 'Bit/Zeichen'
+                },
+                {
+                    name: 'Maximale Entropie (Entscheidungsgehalt)',
+                    formula: '$$H_0 = \\log_2 m$$',
+                    description: 'Die maximale Entropie (auch Entscheidungsgehalt) tritt auf, wenn alle $m$ Zeichen gleich wahrscheinlich sind ($p(x_i) = 1/m$).',
+                    unit: 'Bit/Zeichen'
+                },
+                {
+                    name: 'Redundanz',
+                    formula: '$$R = H_0 - H$$',
+                    description: 'Die Differenz zwischen maximal möglicher Entropie $H_0$ und tatsächlicher Entropie $H$.',
+                    unit: 'Bit/Zeichen'
+                },
+                {
+                    name: 'Relative Redundanz',
+                    formula: '$$r = \\frac{R}{H_0} = 1 - \\frac{H}{H_0}$$',
+                    description: 'Die relative Redundanz ist das Verhältnis von Redundanz zur maximalen Entropie.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Transinformation',
+                    formula: '$$I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)$$',
+                    description: 'Die beim Empfänger ankommende Information, die tatsächlich von der Quelle stammt.',
+                    unit: 'Bit/Zeichen'
+                },
+                {
+                    name: 'Informationsfluss',
+                    formula: '$$I = \\nu_s \\cdot H(X)$$',
+                    description: 'Der Informationsfluss gibt an, wie viel Information pro Zeiteinheit übertragen wird. $\\nu_s$ ist die Symbolrate (Symbole pro Sekunde).',
+                    unit: 'Bit/s'
+                },
+                {
+                    name: 'Shannon-Hartley-Gesetz (Kanalkapazität)',
+                    formula: '$$C = B \\cdot \\log_2(1 + \\frac{S}{N})$$',
+                    description: 'Die maximale Informationsrate eines gestörten Kanals. $B$ ist die Bandbreite, $S/N$ das Signal-Rausch-Verhältnis.',
+                    unit: 'Bit/s'
+                }
+            ]
+        },
+        codierung: {
+            name: 'Codierung',
+            formulas: [
+                {
+                    name: 'Mittlere Codewortlänge',
+                    formula: '$$L = \\sum_{i=1}^{m} p(x_i) \\cdot l_i$$',
+                    description: 'Die durchschnittliche Länge der Codewörter eines Codes, gewichtet mit den Wahrscheinlichkeiten der Zeichen. $l_i$ ist die Länge des Codewortes für $x_i$.',
+                    unit: 'Zeichen'
+                },
+                {
+                    name: 'Coderedundanz',
+                    formula: '$$R_{Code} = L - H$$',
+                    description: 'Die Differenz zwischen der mittleren Codewortlänge und der Entropie der Quelle.',
+                    unit: 'Bit/Zeichen'
+                },
+                {
+                    name: 'Relative Coderedundanz',
+                    formula: '$$r_{Code} = \\frac{L - H}{L}$$',
+                    description: 'Das Verhältnis von Coderedundanz zur mittleren Codewortlänge.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Kraft-Ungleichung',
+                    formula: '$$\\sum_{i=1}^{m} D^{-l_i} \\leq 1$$',
+                    description: 'Eine notwendige und hinreichende Bedingung für die Existenz eines eindeutig decodierbaren Codes. $D$ ist die Größe des Codealphabets, $l_i$ sind die Codewortlängen.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Hamming-Distanz',
+                    formula: '$$d(x,y) = \\sum_{i=1}^{n} |x_i - y_i|$$',
+                    description: 'Die Anzahl der Positionen, an denen sich zwei Codewörter unterscheiden.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Minimale Hamming-Distanz eines Codes',
+                    formula: '$$d_{min} = \\min_{x \\neq y} d(x,y)$$',
+                    description: 'Die kleinste Hamming-Distanz zwischen beliebigen zwei verschiedenen Codewörtern eines Codes.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Fehlererkennungskapazität',
+                    formula: '$$t_{detect} = d_{min} - 1$$',
+                    description: 'Die maximale Anzahl von Bitfehlern, die ein Code mit minimaler Hamming-Distanz $d_{min}$ garantiert erkennen kann.',
+                    unit: 'Fehler'
+                },
+                {
+                    name: 'Fehlerkorrekturkapazität',
+                    formula: '$$t_{correct} = \\lfloor \\frac{d_{min} - 1}{2} \\rfloor$$',
+                    description: 'Die maximale Anzahl von Bitfehlern, die ein Code mit minimaler Hamming-Distanz $d_{min}$ garantiert korrigieren kann.',
+                    unit: 'Fehler'
+                }
+            ]
+        },
+        signale: {
+            name: 'Signale und Übertragung',
+            formulas: [
+                {
+                    name: 'Nyquist-Shannon-Abtasttheorem',
+                    formula: '$$f_s \\geq 2 \\cdot f_{max}$$',
+                    description: 'Die Abtastrate $f_s$ muss mindestens doppelt so hoch sein wie die höchste im Signal enthaltene Frequenz $f_{max}$, um das Signal verlustfrei rekonstruieren zu können.',
+                    unit: 'Hz'
+                },
+                {
+                    name: 'Nyquist-Grenze (max. Bitrate ohne Intersymbolinterferenz)',
+                    formula: '$$R_{max} = 2 \\cdot B \\cdot \\log_2 M$$',
+                    description: 'Die maximale Bitrate, die über einen Kanal mit Bandbreite $B$ ohne Intersymbolinterferenz übertragen werden kann. $M$ ist die Anzahl unterscheidbarer Signalzustände.',
+                    unit: 'Bit/s'
+                },
+                {
+                    name: 'Signal-Rausch-Verhältnis (SNR)',
+                    formula: '$$SNR = \\frac{P_S}{P_N}$$',
+                    description: 'Das Verhältnis der Signalleistung $P_S$ zur Rauschleistung $P_N$.',
+                    unit: 'dimensionslos, oft in dB: $SNR_{dB} = 10 \\cdot \\log_{10}(SNR)$'
+                },
+                {
+                    name: 'Fourier-Reihe (periodisches Signal)',
+                    formula: '$$x(t) = a_0 + \\sum_{n=1}^{\\infty} \\left[ a_n \\cos(n \\omega_0 t) + b_n \\sin(n \\omega_0 t) \\right]$$',
+                    description: 'Darstellung eines periodischen Signals als Summe von Sinus- und Kosinusfunktionen. $\\omega_0 = 2\\pi/T$ ist die Grundfrequenz, $T$ die Periodendauer.',
+                    unit: 'abhängig vom Signal'
+                },
+                {
+                    name: 'Fourierkoeffizienten',
+                    formula: '$$a_0 = \\frac{1}{T} \\int_{0}^{T} x(t) dt, \\quad a_n = \\frac{2}{T} \\int_{0}^{T} x(t) \\cos(n \\omega_0 t) dt, \\quad b_n = \\frac{2}{T} \\int_{0}^{T} x(t) \\sin(n \\omega_0 t) dt$$',
+                    description: 'Berechnung der Koeffizienten der Fourier-Reihe für ein periodisches Signal $x(t)$ mit Periode $T$.',
+                    unit: 'abhängig vom Signal'
+                },
+                {
+                    name: 'Fourier-Transformation (nicht-periodisches Signal)',
+                    formula: '$$X(f) = \\int_{-\\infty}^{\\infty} x(t) \\cdot e^{-j2\\pi ft} dt$$',
+                    description: 'Transformation eines zeitkontinuierlichen Signals $x(t)$ in den Frequenzbereich. $X(f)$ ist die komplexe Spektralfunktion.',
+                    unit: 'abhängig vom Signal'
+                },
+                {
+                    name: 'Inverse Fourier-Transformation',
+                    formula: '$$x(t) = \\int_{-\\infty}^{\\infty} X(f) \\cdot e^{j2\\pi ft} df$$',
+                    description: 'Rücktransformation einer Spektralfunktion $X(f)$ in den Zeitbereich.',
+                    unit: 'abhängig vom Signal'
+                }
+            ]
+        },
+        kanalmodelle: {
+            name: 'Kanalmodelle und Fehlerwahrscheinlichkeiten',
+            formulas: [
+                {
+                    name: 'Bitfehlerwahrscheinlichkeit (BER) für BPSK in AWGN',
+                    formula: '$$P_b = Q\\left(\\sqrt{\\frac{2E_b}{N_0}}\\right)$$',
+                    description: 'Die Wahrscheinlichkeit eines Bitfehlers bei BPSK-Modulation in einem AWGN-Kanal. $E_b$ ist die Energie pro Bit, $N_0$ die Rauschleistungsdichte, $Q$ die Q-Funktion.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Q-Funktion',
+                    formula: '$$Q(x) = \\frac{1}{\\sqrt{2\\pi}} \\int_{x}^{\\infty} e^{-\\frac{t^2}{2}} dt$$',
+                    description: 'Die Q-Funktion ist das Integral der Standardnormalverteilung von $x$ bis Unendlich.',
+                    unit: 'dimensionslos'
+                },
+                {
+                    name: 'Kapazität des binären symmetrischen Kanals (BSC)',
+                    formula: '$$C = 1 - H(p) = 1 + p \\log_2 p + (1-p) \\log_2 (1-p)$$',
+                    description: 'Die Kanalkapazität eines BSC mit Übergangswahrscheinlichkeit (Fehlerwahrscheinlichkeit) $p$. $H(p)$ ist die binäre Entropie.',
+                    unit: 'Bit/Übertragung'
+                },
+                {
+                    name: 'Kapazität des binären Auslöschungskanals (BEC)',
+                    formula: '$$C = 1 - \\epsilon$$',
+                    description: 'Die Kanalkapazität eines BEC mit Auslöschungswahrscheinlichkeit $\\epsilon$.',
+                    unit: 'Bit/Übertragung'
+                },
+                {
+                    name: 'Binäre Entropie',
+                    formula: '$$H(p) = -p \\log_2 p - (1-p) \\log_2 (1-p)$$',
+                    description: 'Die Entropie einer binären Quelle mit Wahrscheinlichkeit $p$ für eine 1 und $(1-p)$ für eine 0.',
+                    unit: 'Bit'
+                },
+                {
+                    name: 'Übergangswahrscheinlichkeitsmatrix',
+                    formula: '$$P = \\begin{pmatrix} P(y_1|x_1) & P(y_2|x_1) & \\cdots & P(y_n|x_1) \\\\ P(y_1|x_2) & P(y_2|x_2) & \\cdots & P(y_n|x_2) \\\\ \\vdots & \\vdots & \\ddots & \\vdots \\\\ P(y_1|x_m) & P(y_2|x_m) & \\cdots & P(y_n|x_m) \\end{pmatrix}$$',
+                    description: 'Beschreibt die bedingten Wahrscheinlichkeiten $P(y_j|x_i)$, dass am Ausgang des Kanals $y_j$ empfangen wird, wenn $x_i$ gesendet wurde.',
+                    unit: 'dimensionslos'
+                }
+            ]
+        }
+    };
+
     return (
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h1 className="text-2xl font-bold text-center mb-6 text-blue-800">Formelsammlung: Informationstheoretische und physikalische Grundlagen</h1>
+        <MathJaxContext config={config}>
+            <div className="container mx-auto p-4 md:p-8">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
+                    Formelsammlung Informationstechnik
+                </h1>
 
-            {/* 1. Grundlagen der Informationstheorie */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">1. Grundlagen der Informationstheorie</h2>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">1.1 Wahrscheinlichkeiten und Fundamentalsatz</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono">∑<sub>i=1</sub><sup>n</sup> P(x<sub>i</sub>) = 1</p>
+                {/* Category selection */}
+                <div className="mb-8">
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {Object.entries(formulaCategories).map(([key, category]) => (
+                            <button
+                                key={key}
+                                onClick={() => setActiveCategory(key)}
+                                className={`px-4 py-2 rounded-lg transition-colors ${
+                                    activeCategory === key
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                {category.name}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">1.2 Informationsgehalt und Entscheidungsgehalt</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">H<sub>0</sub> = log<sub>2</sub> m = ld m</p>
-                        <p className="font-mono mb-2">P(x<sub>i</sub>) = 1/m</p>
-                        <p className="font-mono mb-2">m = 2<sup>H<sub>0</sub></sup></p>
-                        <p className="font-mono">log<sub>2</sub> x = log<sub>10</sub> x / log<sub>10</sub> 2 = ln x / ln 2</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">1.3 Mittlerer Informationsgehalt (Entropie) H</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">H = -∑<sub>i=1</sub><sup>n</sup> P(x<sub>i</sub>) · log<sub>2</sub> P(x<sub>i</sub>)</p>
-                        <p className="font-mono mb-2">H = log<sub>2</sub> m = H<sub>0</sub> (gleich wahrscheinliche Zustände)</p>
-                        <p className="font-mono">H = 0 (sicheres Ereignis)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">1.4 Redundanz</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">R<sub>Q</sub> = H<sub>0</sub> - H</p>
-                        <p className="font-mono">r = R<sub>Q</sub>/H<sub>0</sub> = (H<sub>0</sub> - H)/H<sub>0</sub></p>
-                    </div>
+                {/* Formulas for the selected category */}
+                <div className="space-y-8">
+                    {formulaCategories[activeCategory].formulas.map((formula, index) => (
+                        <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div className="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                                <h2 className="text-xl font-semibold text-gray-800">{formula.name}</h2>
+                            </div>
+                            <div className="p-4">
+                                <div className="bg-gray-50 p-4 mb-4 overflow-x-auto">
+                                    <MathJax>{formula.formula}</MathJax>
+                                </div>
+                                <div className="mb-3">
+                                    <h3 className="text-sm font-medium text-gray-500 mb-1">Beschreibung:</h3>
+                                    <p className="text-gray-700">
+                                        <MathJax>{formula.description}</MathJax>
+                                    </p>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-500 mb-1">Einheit:</h3>
+                                    <p className="text-gray-700">
+                                        <MathJax>{formula.unit}</MathJax>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            {/* 2. Informationsübertragung */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">2. Informationsübertragung</h2>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">2.1 Quellen mit unabhängigen Ereignissen</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">P(x<sub>i</sub>, x<sub>j</sub>) = P(x<sub>i</sub>) · P(x<sub>j</sub>)</p>
-                        <p className="font-mono">P(x<sub>i</sub>, x<sub>j</sub>, x<sub>k</sub>) = P(x<sub>i</sub>) · P(x<sub>j</sub>) · P(x<sub>k</sub>)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">2.2 Quellen mit abhängigen Ereignissen (Markow-Quellen)</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">P(x<sub>j</sub>|x<sub>i</sub>) = Wahrscheinlichkeit für x<sub>j</sub> nach Eintreten von x<sub>i</sub></p>
-                        <p className="font-mono">P(x<sub>j</sub>) = ∑<sub>i=1</sub><sup>n</sup> P(x<sub>i</sub>) · P(x<sub>j</sub>|x<sub>i</sub>)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">2.3 Entropien bei Verbundquellen</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">H(X,Y) = H(X) + H(Y) (unabhängige Quellen)</p>
-                        <p className="font-mono mb-2">H(X,Y) = H(X) + H(Y|X) = H(Y) + H(X|Y) (abhängige Quellen)</p>
-                        <p className="font-mono mb-2">H(Y|X) = -∑<sub>i=1</sub><sup>m</sup> ∑<sub>j=1</sub><sup>n</sup> P(x<sub>i</sub>, y<sub>j</sub>) · log<sub>2</sub> P(y<sub>j</sub>|x<sub>i</sub>)</p>
-                        <p className="font-mono mb-2">H(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X) = H(X) + H(Y) - H(X,Y)</p>
-                        <p className="font-mono mb-2">H(X|Y) = H(X,Y) - H(Y) (Äquivokation)</p>
-                        <p className="font-mono">H(Y|X) = H(X,Y) - H(X) (Irrelevanz)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">2.4 Symmetrisch gestörter Binärkanal</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">H(X;Y) = 1 + p · ld p + (1-p) · ld(1-p)</p>
-                        <p className="font-mono">Optimale Transinformation bei P(x<sub>1</sub>) = P(x<sub>2</sub>) = 0,5</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">2.5 Informationsfluss und Kanalkapazität</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">I = H(X<sub>1</sub>, X<sub>2</sub>, ... X<sub>N</sub>)/T = N·H(X)/(N·t) = H(X)/t = v<sub>s</sub>·H(X)</p>
-                        <p className="font-mono">C = I<sub>max</sub> = v<sub>s</sub>·H(X;Y)<sub>max</sub></p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 3. Signale und Signalübertragung */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">3. Signale und Signalübertragung</h2>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">3.1 Rechteckimpuls</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">D = T<sub>I</sub>/T<sub>0</sub> (Tastverhältnis)</p>
-                        <p className="font-mono mb-2">f<sub>0</sub> = 1/T<sub>0</sub> (Grundfrequenz)</p>
-                        <p className="font-mono">ω<sub>0</sub> = 2π · f<sub>0</sub> (Kreisfrequenz)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">3.2 Abtasttheorem</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono">f<sub>A</sub> ≥ 2f<sub>G</sub> (Abtastfrequenz mindestens doppelte Grenzfrequenz)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">3.3 Fourier-Reihe für periodische Signale</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">y(t) = A<sub>0</sub> + ∑<sub>n=1</sub><sup>∞</sup> [A<sub>n</sub> · cos(nω<sub>0</sub>t) + B<sub>n</sub> · sin(nω<sub>0</sub>t)]</p>
-                        <p className="font-mono mb-2">A<sub>0</sub> = (1/T<sub>0</sub>) ∫<sub>0</sub><sup>T<sub>0</sub></sup> y(t) dt</p>
-                        <p className="font-mono mb-2">A<sub>n</sub> = (2/T<sub>0</sub>) ∫<sub>0</sub><sup>T<sub>0</sub></sup> y(t) · cos(nω<sub>0</sub>t) dt</p>
-                        <p className="font-mono">B<sub>n</sub> = (2/T<sub>0</sub>) ∫<sub>0</sub><sup>T<sub>0</sub></sup> y(t) · sin(nω<sub>0</sub>t) dt</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">3.4 Grenzfrequenz</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono">f<sub>G</sub> = 1/T<sub>I</sub> (Grenzfrequenz für Rechteckimpuls)</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 4. Übertragungskapazität von Kanälen */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">4. Übertragungskapazität von Kanälen</h2>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">4.1 Idealer Kanal ohne Störungen (Gesetz von Hartley)</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">C = 2 · B · log<sub>2</sub> n [bit/s]</p>
-                        <p className="font-mono mb-2">B: Bandbreite</p>
-                        <p className="font-mono">n: Anzahl unterscheidbarer Amplitudenstufen</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">4.2 Kanal mit Störungen (Shannon-Hartley-Gesetz)</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">C = B · log<sub>2</sub>(1 + P<sub>S</sub>/P<sub>N</sub>) [bit/s]</p>
-                        <p className="font-mono mb-2">P<sub>S</sub>: mittlere Signalleistung</p>
-                        <p className="font-mono mb-2">P<sub>N</sub>: mittlere Rauschleistung</p>
-                        <p className="font-mono">SNR = 10 · log<sub>10</sub>(P<sub>S</sub>/P<sub>N</sub>) [dB]</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">4.3 Übertragung analoger Signale über digitale Kanäle</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">b<sub>Kmax</sub> ≥ f<sub>A</sub> · log<sub>2</sub> n ≥ 2f<sub>Smax</sub> · log<sub>2</sub> n</p>
-                        <p className="font-mono">b = Symbolrate · log<sub>2</sub> n</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 5. Codierung */}
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">5. Codierung</h2>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">5.1 Quellencodierung</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">L = ∑<sub>i=1</sub><sup>N</sup> p<sub>i</sub> · l<sub>i</sub> (Mittlere Codewortlänge bei variabler Länge)</p>
-                        <p className="font-mono mb-2">L ≥ log<sub>2</sub> N (Mittlere Codewortlänge bei Blockcode)</p>
-                        <p className="font-mono mb-2">R<sub>Code</sub> = L - H (Coderedundanz)</p>
-                        <p className="font-mono">H ≤ L &lt; H + 1 (Shannon-Quellencodierungstheorem)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">5.2 Kanalcodierung</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">d<sub>min</sub> = kleinster Abstand zwischen zulässigen Codewörtern</p>
-                        <p className="font-mono mb-2">d<sub>min</sub> ≥ e + 1 (Fehlererkennbarkeit, e = Fehlergewicht)</p>
-                        <p className="font-mono mb-2">d<sub>min</sub> ≥ 2e + 1 (Fehlerkorrigierbarkeit)</p>
-                        <p className="font-mono mb-2">R<sub>C</sub> = k/n (Coderate, k = Anzahl Informationsbits, n = Gesamtlänge)</p>
-                        <p className="font-mono">2<sup>r</sup> ≥ n + 1 bzw. r ≥ log<sub>2</sub>(n+1) (Anzahl Prüfstellen für Einfachfehlerkorrektur)</p>
-                    </div>
-                </div>
-
-                <div className="mb-6">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">5.3 Leitungscodierung</h3>
-                    <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="font-mono mb-2">b = Symbolrate · log<sub>2</sub> n</p>
-                        <p className="font-mono">Symbol- und Übertragungsrate identisch bei n = 2</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Variablentabelle */}
-            <div>
-                <h2 className="text-xl font-semibold text-blue-700 border-b-2 border-blue-200 pb-1 mb-4">Variablen und Bezeichnungen</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-300">
-                        <thead>
-                        <tr className="bg-blue-100">
-                            <th className="py-2 px-4 border-b border-r border-gray-300 text-left">Symbol</th>
-                            <th className="py-2 px-4 border-b border-gray-300 text-left">Bedeutung</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">P(x<sub>i</sub>)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Wahrscheinlichkeit des Ereignisses x<sub>i</sub></td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">P(x<sub>i</sub>, x<sub>j</sub>)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Verbundwahrscheinlichkeit der Ereignisse x<sub>i</sub> und x<sub>j</sub></td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">P(x<sub>j</sub>|x<sub>i</sub>)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Bedingte Wahrscheinlichkeit (Übergangswahrscheinlichkeit)</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Entropie, mittlerer Informationsgehalt</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H<sub>0</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Entscheidungsgehalt</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H(X,Y)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Verbundentropie</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H(X|Y)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Bedingte Entropie, Äquivokation</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H(Y|X)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Bedingte Entropie, Irrelevanz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">H(X;Y)</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Transinformation</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">R<sub>Q</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Quellenredundanz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">r</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Relative Redundanz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">I</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Informationsfluss</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">C</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Kanalkapazität</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">v<sub>s</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Symbolrate (auch Baudrate)</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">T<sub>0</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Periodendauer</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">T<sub>I</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Impulsdauer</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">D</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Tastverhältnis</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">f<sub>0</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Grundfrequenz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">f<sub>G</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Grenzfrequenz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">f<sub>A</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Abtastfrequenz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">B</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Bandbreite</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">n</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Anzahl unterscheidbarer Zustände/Amplitudenstufen</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">P<sub>S</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Signalleistung</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">P<sub>N</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Rauschleistung</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">SNR</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Signal-Rausch-Verhältnis</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">L</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Mittlere Codewortlänge</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">R<sub>Code</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Coderedundanz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">d<sub>min</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Hamming-Distanz</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">e</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Fehlergewicht</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100 bg-gray-50">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">R<sub>C</sub></td>
-                            <td className="py-2 px-4 border-b border-gray-300">Coderate</td>
-                        </tr>
-                        <tr className="hover:bg-gray-100">
-                            <td className="py-2 px-4 border-b border-r border-gray-300 font-mono">b</td>
-                            <td className="py-2 px-4 border-b border-gray-300">Bitrate (Übertragungsrate)</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        </MathJaxContext>
     );
 };
 

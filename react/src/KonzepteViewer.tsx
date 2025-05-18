@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 // Interface for a single concept entry
 interface KonzeptEntry {
     begriff: string; // Concept/Term
     beschreibung: string; // Description
+    kategorie?: string; // Optional category
 }
 
 // Raw text content extracted from Konzepte.pdf
 // In a real app, this would likely be fetched or passed as a prop.
-// This content is based on the PDF provided earlier.
 const pdfTextContent = `
 "Allgemeine Grundlagen
 ","Eine mathematische Theorie aus der Wahrscheinlichkeitstheorie und Statistik, die sich mit der
@@ -410,113 +410,105 @@ const pdfTextContent = `
 
 const KonzepteViewer: React.FC = () => {
     // State to hold the parsed Konzept entries
-    const [konzepte, setKonzepte] = React.useState<KonzeptEntry[]>([]);
+    const [konzepte, setKonzepte] = useState<KonzeptEntry[]>([]);
+    // State for search term
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    // State for active category
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-    // Effect to parse the PDF text content on component mount
-    React.useEffect(() => {
-        const lines = pdfTextContent.trim().split(/\r?\n/);
+    // Parse the konzept entries from the text content
+    useEffect(() => {
+        // Split the content into chunks that each represent a concept or section header
+        const chunks = pdfTextContent.trim().split(/\n"/).filter(Boolean);
         const parsedKonzepte: KonzeptEntry[] = [];
+        let currentCategory = "Allgemeine Grundlagen"; // Default category
 
-        // Iterating through lines to parse concepts.
-        // This logic assumes a pattern where a concept title is on one line,
-        // and its description follows on the next, both enclosed in quotes
-        // and separated by a comma and newline in the raw text.
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+        chunks.forEach(chunk => {
+            // Clean up the chunk
+            const cleanChunk = chunk.replace(/\r?\n/g, ' ').trim();
 
-            // Heuristic to identify a line that might be a concept title.
-            // Example pattern: "Begriff","
-            if (line.startsWith('"') && line.endsWith('","')) {
-                const begriff = line.substring(1, line.length - 3).trim(); // Extract term
+            // Check if this chunk is a section header (no comma after the first quote)
+            if (cleanChunk.startsWith('"') && !cleanChunk.includes('","')) {
+                // This is a section header, update the current category
+                currentCategory = cleanChunk.replace(/"/g, '').trim();
+                // We might want to add this as an entry too, to make it visible in the UI
+                parsedKonzepte.push({
+                    begriff: currentCategory,
+                    beschreibung: "",
+                    kategorie: "Kategorie"
+                });
+            }
+            // Check if this is a concept (has a term and description)
+            else if (cleanChunk.includes('","')) {
+                // Get the term and description
+                const parts = cleanChunk.split('","');
+                if (parts.length >= 2) {
+                    const begriff = parts[0].replace(/^"/, '').trim();
+                    const beschreibung = parts[1].replace(/"$/, '').trim();
 
-                let beschreibung = "Keine separate Beschreibung gefunden."; // Default description
+                    // Special handling for incomplete entries (like "Äquivokation H(X" and "Y)")
+                    if (begriff === "Aquivokation H(X" && parts[1].trim() === "Y)") {
+                        parsedKonzepte.push({
+                            begriff: "Äquivokation H(X|Y)",
+                            beschreibung: "Die Information, die im Kanal verloren geht. Teil der Transinformationsformel.",
+                            kategorie: currentCategory
+                        });
+                    }
+                    // Special handling for "Irrelevanz"
+                    else if (begriff === "Irrelevanz H(Y" && parts[1].trim() === "X)") {
+                        parsedKonzepte.push({
+                            begriff: "Irrelevanz H(Y|X)",
+                            beschreibung: "Information, die der Empfänger erhält, die nicht von der Quelle stammt (Störungen). Teil der Transinformationsformel.",
+                            kategorie: currentCategory
+                        });
+                    }
+                    // Special handling for "Übergangswahrscheinlichkeit" (empty description)
+                    else if (begriff === "Übergangswahrscheinlichkeit P(x_{1})" && beschreibung === "") {
+                        parsedKonzepte.push({
+                            begriff: "Übergangswahrscheinlichkeit P(xj|xi)",
+                            beschreibung: "Die bedingte Wahrscheinlichkeit, dass auf ein Zeichen xi ein Zeichen xj folgt. Wichtig für Quellen mit Gedächtnis.",
+                            kategorie: currentCategory
+                        });
+                    }
+                    // Handle cases for split fields in Tastverhältnis and Frequenzspektrum
+                    else if (begriff === "Tastverhältnis (D)" && beschreibung.includes("im Frequenzbereich")) {
+                        // Split the description at the point where the Frequenzspektrum description starts
+                        const parts = beschreibung.split("im Frequenzbereich");
 
-                // Check if the next line could be the description for the current term.
-                // Example pattern for description: "Beschreibung."
-                if (i + 1 < lines.length) {
-                    const nextLine = lines[i+1].trim();
-                    if (nextLine.startsWith('"') && nextLine.endsWith('"')) {
-                        beschreibung = nextLine.substring(1, nextLine.length - 1).trim(); // Extract description
-                        i++; // Increment i to skip the description line in the next iteration
-                    } else {
-                        // If the next line doesn't fit the description pattern,
-                        // it might be another concept or a section header.
-                        // The current 'begriff' will use the default 'beschreibung'.
-                        // This part can be refined if there are multiple description lines or different patterns.
+                        // Add the Tastverhältnis with its correct description
+                        parsedKonzepte.push({
+                            begriff,
+                            beschreibung: parts[0].trim(),
+                            kategorie: currentCategory
+                        });
+
+                        // Add Frequenzspektrum separately with its correct description
+                        if (parts[1]) {
+                            parsedKonzepte.push({
+                                begriff: "Frequenzspektrum",
+                                beschreibung: "Die Darstellung eines Signals im Frequenzbereich, " + parts[1].trim(),
+                                kategorie: currentCategory
+                            });
+                        }
+                    }
+                    // Normal case
+                    else if (begriff && beschreibung) {
+                        // Fix HTML entities and escape sequences
+                        const fixedBeschreibung = beschreibung
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;0x98>/g, '′') // Prime symbol
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;0x89>/g, '₁') // Subscript 1
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;0x86>/g, 'ₘ') // Subscript m
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;0xA6>/g, 'ₐ') // Subscript a
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;0x99>/g, 'ₙ') // Subscript n
+                            .replace(/&lt;0xE2>&lt;0x82>&lt;s>/g, 's') // Symbol s
+                            .replace(/&lt;s>/g, 's'); // Symbol s
+
+                        parsedKonzepte.push({
+                            begriff,
+                            beschreibung: fixedBeschreibung,
+                            kategorie: currentCategory
+                        });
                     }
                 }
-                parsedKonzepte.push({ begriff, beschreibung });
-
-            } else if (line.startsWith('"') && line.endsWith('"') && !lines[i-1]?.endsWith('","')) {
-                // This handles cases that might be section titles or terms without the specific '","' ending,
-                // but are still quoted.
-                // For simplicity, these are added as terms with a placeholder description.
-                // This avoids them being missed if they don't strictly follow the primary pattern.
-                const begriff = line.substring(1, line.length - 1).trim();
-                // Avoid adding duplicates if the previous line was a title for this (less likely with current logic but a safeguard)
-                if (!parsedKonzepte.find(k => k.beschreibung === begriff && k.begriff === lines[i-1]?.substring(1, lines[i-1].length - 3).trim())) {
-                    parsedKonzepte.push({
-                        begriff: begriff,
-                        beschreibung: "Dies könnte ein Abschnittstitel oder ein Konzept mit anderer Formatierung sein.",
-                    });
-                }
             }
-        }
-        setKonzepte(parsedKonzepte);
-    }, []); // Empty dependency array ensures this effect runs only once on mount
-
-    // Display a loading message or if no concepts were parsed
-    if (konzepte.length === 0) {
-        return (
-            <div className="container mx-auto p-4 md:p-8">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
-                    Konzepte der Informationstheorie
-                </h1>
-                <p className="text-center text-gray-600">Lade Konzepte oder keine Einträge gefunden...</p>
-                <p className="text-center text-xs text-gray-500 mt-2">Hinweis: Die Darstellung basiert auf der Textextraktion aus der PDF-Datei.</p>
-            </div>
-        );
-    }
-
-    // Render the table of concepts
-    return (
-        <div className="container mx-auto p-4 md:p-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">
-                Konzepte der Informationstheorie
-            </h1>
-            <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
-                <table className="min-w-full table-auto">
-                    <thead className="bg-gray-200">
-                    <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-1/3">
-                            Begriff
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-2/3">
-                            Beschreibung
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                    {konzepte.map((konzept, index) => (
-                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100 transition-colors duration-150'}>
-                            <td className="px-4 py-3 whitespace-normal align-top">
-                                <strong className="font-semibold text-gray-800">{konzept.begriff}</strong>
-                            </td>
-                            <td className="px-4 py-3 whitespace-normal align-top text-sm text-gray-700 leading-relaxed">
-                                {/* Replace escaped less-than/greater-than for HTML display if necessary, e.g. for Redundanz */}
-                                {konzept.beschreibung.replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-            </div>
-            <p className="text-center text-xs text-gray-500 mt-4">
-                Hinweis: Diese Tabelle wurde automatisch aus dem Text der PDF-Datei "Konzepte.pdf" generiert.
-                Die Genauigkeit der Zuordnung von Begriff und Beschreibung hängt von der Textstruktur der PDF ab.
-            </p>
-        </div>
-    );
-};
-
-export default KonzepteViewer;
+        });}

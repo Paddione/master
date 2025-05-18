@@ -1,51 +1,38 @@
 import React, { useState } from 'react';
-import HomePage from './HomePage';
-import FormulaCollection from './FormulaCollection.jsx';
-import ITIStudyGuide from './ITIStudyGuide.tsx';
-import KonzepteViewer from './KonzepteViewer.tsx';
-
-// Define possible page identifiers.
-type PageId = 'home' | 'formulas' | 'iti-guide' | 'konzepte'; // Add 'konzepte'
+// Kommentiere die fehlenden Importe aus
+// import KonzepteViewer from './KonzepteViewer';
+// import ITIStudyGuide from './ITIStudyGuide';
+import FormulaCollection from './FormulaCollection';
 
 function App() {
-    // State to keep track of the current page, initialized to 'home'
-    const [currentPage, setCurrentPage] = useState<PageId>('home');
-
-    // Function to change the current page
-    const navigateTo = (page: string) => {
-        setCurrentPage(page as PageId);
-    };
-
-    // Function to render the component based on the currentPage state
-    const renderPage = () => {
-        switch (currentPage) {
-            case 'formulas':
-                return <FormulaCollection />;
-            case 'iti-guide':
-                return <ITIStudyGuide />;
-            case 'konzepte': // Add case for 'konzepte'
-                return <KonzepteViewer />;
-            case 'home':
-            default:
-                return <HomePage navigateTo={navigateTo} />;
-        }
-    };
+    // Vereinfachen wir den State zu 'formulas', da die anderen Komponenten noch nicht existieren
+    const [activeComponent, setActiveComponent] = useState<'iti' | 'konzepte' | 'formulas'>('formulas');
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {currentPage !== 'home' && (
-                <div className="p-4">
-                    <button
-                        onClick={() => navigateTo('home')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out fixed top-4 left-4 z-20"
-                    >
-                        &larr; Back to Home
-                    </button>
+            <header className="bg-blue-700 text-white p-4 shadow-md">
+                <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+                    <h1 className="text-2xl font-bold mb-4 md:mb-0">ITI Studienführer</h1>
+                    <nav>
+                        <ul className="flex flex-wrap space-x-2 md:space-x-4">
+                            <li className="mb-2 md:mb-0">
+                                <button
+                                    onClick={() => setActiveComponent('formulas')}
+                                    className={`px-3 py-1 md:px-4 md:py-2 rounded transition-colors bg-white text-blue-700 font-medium`}
+                                >
+                                    Formelsammlung
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
-            )}
-            <div className={currentPage !== 'home' ? 'pt-20' : ''}>
-                {renderPage()}
-            </div>
+            </header>
+            <main>
+                {/* Kommentiere die nicht vorhandenen Komponenten aus */}
+                {/* {activeComponent === 'iti' && <ITIStudyGuide />} */}
+                {/* {activeComponent === 'konzepte' && <KonzepteViewer />} */}
+                {activeComponent === 'formulas' && <FormulaCollection />}
+            </main>
         </div>
     );
 }
