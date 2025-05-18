@@ -165,12 +165,21 @@ app.use('/', require('./routes/hallOfFameRoutes')); // Contains /api/hall-of-fam
 app.use(function (err, req, res, next) {
     if (err.code === 'EBADCSRFTOKEN') {
         console.warn('CSRF Token Error:', req.path, req.method, req.headers.origin);
+
         // For API requests, respond with JSON
         if (req.path.startsWith('/api/')) {
             return res.status(403).json({ message: 'Invalid CSRF token or session expired. Please refresh and try again.' });
         }
-        req.flash('error_msg', 'Form submission error or session expired. Please try again.');
-        return res.redirect(req.session.returnTo || req.originalUrl.split('?')[0] || '/');
+
+        // For browser requests, try to use flash, else fallback
+        if (typeof req.flash === 'function') {
+            req.flash('error_msg', 'Form submission error or session expired. Please try again.');
+            return res.redirect(req.session.returnTo || req.originalUrl.split('?')[0] || '/');
+        } else {
+            // Fallback: log and redirect to login or error page with a query param
+            console.error('req.flash is not a function in CSRF error handler. Session might be lost or middleware order issue.');
+            return res.redirect('/auth/login?error=session_expired');
+        }
     }
     next(err);
 });
@@ -196,10 +205,15 @@ app.use((err, req, res, next) => {
     if (res.headersSent) {
         return next(err);
     }
-    res.status(statusCode).render('error', { // Assuming you have an error.ejs view
+    res.status(statusCode).render('error', {
         title: `Error ${statusCode}`,
         message: errorMessage,
-        error: process.env.NODE_ENV === 'development' ? { message: err.message, stack: err.stack, status: statusCode } : {}
+        error: process.env.NODE_ENV === 'development' ? { message: err.message, stack: err.stack, status: statusCode } : {},
+        currentUser: req.user || null,
+        success_msg: '',
+        error_msg: '',
+        validation_errors: [],
+        old_input: {}
     });
 });
 
