@@ -6,21 +6,26 @@
     <title>Online Multiplayer Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="font-inter flex flex-col items-center justify-center min-h-screen p-4 selection:bg-sky-500 selection:text-white" style="background-color: var(--background-color); color: var(--text-color);">
 
-<button id="mute-btn" class="btn btn-secondary fixed bottom-5 right-5 z-50 opacity-80 hover:opacity-100">
+<div id="loading-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-90 flex flex-col items-center justify-center z-50">
+    <div class="animate-spin w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full mb-4"></div>
+    <p class="text-white text-lg">Connecting to server...</p>
+</div>
+
+<button id="mute-btn" class="btn btn-secondary fixed bottom-5 right-5 z-40 opacity-80 hover:opacity-100">
     Mute
 </button>
 
-<div id="game-paused-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-40">
+<div id="game-paused-overlay" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-30">
     <h2 class="text-4xl font-bold text-amber-400 mb-4 animate-pulse">Spiel pausiert</h2>
     <p id="pause-resume-message" class="text-slate-300 text-lg">Der Host kann das Spiel fortsetzen.</p>
 </div>
 
-<div id="lobby-connect-container" class="main-content w-full max-w-md text-center">
+<div id="lobby-connect-container" class="main-content w-full max-w-md text-center hidden">
     <h1 class="text-4xl font-bold mb-8" style="color: var(--primary-color);">Quiz Master</h1>
     <div class="form-group mb-6">
         <label for="player-name" class="block text-lg mb-2 text-left">Dein Name:</label>
@@ -142,6 +147,6 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+<script src="/assets/script.js"></script>
 </body>
 </html>

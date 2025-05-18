@@ -46,8 +46,10 @@ app.use(cors(corsOptions)); // <<<< 2. USE CORS MIDDLEWARE
 require('./config/passport-config')(passport);
 
 // --- Database Configuration & Connection ---
-// ... (your existing DB connection logic) ...
-const dbURI = process.env.MONGO_URI;
+// FIX: Use the container name "mongo" instead of localhost
+// Make sure dbURI is using the configuration from docker-compose environment
+const dbURI = process.env.MONGO_URI || `mongodb://${process.env.MONGO_ROOT_USER}:${process.env.MONGO_ROOT_PASSWORD}@mongo:27017/${process.env.MONGO_AUTH_DB_NAME}?authSource=admin&directConnection=true`;
+
 const connectWithRetry = () => {
     console.log('Attempting MongoDB connection...');
     mongoose.connect(dbURI, { serverSelectionTimeoutMS: 5000 })
