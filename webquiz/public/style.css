@@ -14,8 +14,12 @@
     --danger-color: #ef4444; /* red-500 */
     --danger-hover-color: #dc2626; /* red-600 */
     --success-color: #22c55e; /* green-500 */
+    --success-hover-color: #16a34a; /* green-600 */
     --warning-color: #f59e0b; /* amber-500 */
+    --warning-hover-color: #d97706; /* amber-600 */
     --info-color: #3b82f6; /* blue-500 */
+    --info-hover-color: #2563eb; /* blue-600 */
+
 
     /* Backgrounds */
     --background-color: #1e293b; /* slate-800 (Matches quiz body gradient darker tone) */
@@ -55,14 +59,14 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-.container {
+.container { /* For auth-app's own layout if needed, quiz uses Tailwind for centering */
     width: 90%;
-    max-width: 700px; /* Adjusted for a more focused auth form area */
+    max-width: 700px;
     margin: 30px auto;
     padding: 0 15px;
 }
 
-/* --- Header & Navigation --- */
+/* --- Header & Navigation (Primarily for Auth App Pages) --- */
 header {
     background: var(--header-background-color);
     color: var(--heading-text-color);
@@ -81,7 +85,7 @@ header .container {
 
 header #branding h1 {
     margin: 0;
-    font-size: 1.75rem; /* Slightly adjusted */
+    font-size: 1.75rem;
     font-weight: 600;
 }
 
@@ -127,26 +131,28 @@ nav a:hover, nav .btn-link-style:hover {
 }
 
 
-/* --- Main Content Area (Forms, etc.) --- */
+/* --- Main Content Area / Cards --- */
+/* This class is used for the main containers in the quiz game */
 .main-content {
     background: var(--card-background-color);
-    padding: 25px 30px;
-    margin-top: 30px;
-    border-radius: var(--border-radius);
+    padding: 2rem; /* Consistent padding (Tailwind p-8) */
+    margin-top: 2rem; /* Consistent margin */
+    border-radius: var(--border-radius); /* rounded-lg */
     box-shadow: var(--box-shadow);
+    color: var(--text-color); /* Ensure text inside cards uses the theme's text color */
 }
 
 /* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
     color: var(--heading-text-color);
     margin-top: 0;
-    margin-bottom: 1rem; /* Consistent bottom margin */
-    font-weight: 600; /* Bolder headings */
+    margin-bottom: 1rem;
+    font-weight: 600;
 }
 
-h1 { font-size: 2rem; } /* 32px */
-h2 { font-size: 1.5rem; margin-bottom: 1.5rem; } /* 24px */
-h3 { font-size: 1.25rem; } /* 20px */
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+h3 { font-size: 1.25rem; }
 
 p {
     margin-bottom: 1rem;
@@ -179,24 +185,27 @@ hr {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: var(--muted-text-color); /* Lighter label color for dark theme */
+    color: var(--muted-text-color);
 }
 
+/* Applied to input and select elements in the quiz */
+.form-control,
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="password"],
 .form-group select {
     width: 100%;
-    padding: 0.75rem 1rem; /* Tailwind p-3 equivalent */
+    padding: 0.75rem 1rem;
     border: 1px solid var(--input-border-color);
-    border-radius: var(--border-radius); /* rounded-lg */
+    border-radius: var(--border-radius);
     box-sizing: border-box;
     font-size: 1rem;
-    background-color: var(--secondary-color); /* Darker input background */
-    color: var(--heading-text-color); /* Light text in inputs */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--secondary-color);
+    color: var(--heading-text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
+.form-control::placeholder,
 .form-group input[type="text"]::placeholder,
 .form-group input[type="email"]::placeholder,
 .form-group input[type="password"]::placeholder {
@@ -204,7 +213,7 @@ hr {
     opacity: 0.7;
 }
 
-
+.form-control:focus,
 .form-group input[type="text"]:focus,
 .form-group input[type="email"]:focus,
 .form-group input[type="password"]:focus,
@@ -212,32 +221,32 @@ hr {
     border-color: var(--input-focus-border-color);
     outline: none;
     box-shadow: 0 0 0 0.2rem var(--focus-ring-color);
-    background-color: var(--secondary-hover-color); /* Slightly lighter on focus */
+    background-color: var(--secondary-hover-color);
 }
 
 .form-group input[type="checkbox"] {
     margin-right: 0.5rem;
     vertical-align: middle;
-    accent-color: var(--primary-color); /* Style checkbox color */
+    accent-color: var(--primary-color);
 }
 
 /* --- Buttons --- */
 .btn {
     display: inline-block;
-    font-weight: 500; /* Medium weight */
+    font-weight: 500;
     color: var(--button-text-color);
     text-align: center;
     vertical-align: middle;
     cursor: pointer;
     background-color: var(--primary-color);
     border: 1px solid var(--primary-color);
-    padding: 0.75rem 1.5rem; /* Tailwind py-3 px-6 equivalent */
-    font-size: 1rem; /* 16px */
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
     line-height: 1.5;
-    border-radius: var(--border-radius); /* rounded-lg */
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease, box-shadow 0.2s ease;
     text-decoration: none;
-    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); /* Subtle shadow */
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
 }
 
 .btn:hover {
@@ -245,7 +254,7 @@ hr {
     background-color: var(--primary-hover-color);
     border-color: var(--primary-hover-color);
     text-decoration: none;
-    transform: translateY(-1px); /* Slight lift on hover */
+    transform: translateY(-1px);
 }
 
 .btn:focus, .btn.focus {
@@ -254,9 +263,22 @@ hr {
 }
 
 .btn:active {
-    transform: translateY(0px); /* Remove lift on active */
+    transform: translateY(0px);
 }
 
+.btn.btn-sm { /* For smaller buttons like pause/skip */
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+.btn-success:hover {
+    background-color: var(--success-hover-color);
+    border-color: var(--success-hover-color);
+}
 
 .btn-danger {
     background-color: var(--danger-color);
@@ -267,27 +289,44 @@ hr {
     border-color: var(--danger-hover-color);
 }
 
+.btn-warning {
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+    color: #000; /* Darker text for better contrast on amber */
+}
+.btn-warning:hover {
+    background-color: var(--warning-hover-color);
+    border-color: var(--warning-hover-color);
+    color: #000;
+}
+
+.btn-info {
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+}
+.btn-info:hover {
+    background-color: var(--info-hover-color);
+    border-color: var(--info-hover-color);
+}
+
 .btn-secondary {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
-    color: var(--heading-text-color); /* Lighter text for secondary buttons */
+    color: var(--heading-text-color);
 }
 .btn-secondary:hover {
     background-color: var(--secondary-hover-color);
     border-color: var(--secondary-hover-color);
 }
 
-.btn-success {
-    background-color: var(--success-color);
-    border-color: var(--success-color);
-}
-.btn-success:hover {
-    background-color: #16a34a; /* green-600 */
-    border-color: #16a34a;
+.btn:disabled, .btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: translateY(0px); /* No hover effect when disabled */
 }
 
 
-.btn img {
+.btn img { /* For auth app's MS login button, etc. */
     height: 20px;
     vertical-align: middle;
     margin-right: 8px;
@@ -301,40 +340,39 @@ hr {
     border: 1px solid transparent;
     border-radius: var(--border-radius);
     font-size: 0.95rem;
-    color: var(--heading-text-color); /* Default light text for alerts */
+    color: var(--heading-text-color);
 }
 
 .alert-success, .alert-success_msg {
-    background-color: rgba(34, 197, 94, 0.2); /* green-500 with opacity */
+    background-color: rgba(34, 197, 94, 0.2);
     border-color: var(--success-color);
-    color: #a7f3d0; /* lighter green text */
+    color: #a7f3d0;
 }
 
 .alert-danger, .alert-error, .alert-error_msg {
-    background-color: rgba(239, 68, 68, 0.2); /* red-500 with opacity */
+    background-color: rgba(239, 68, 68, 0.2);
     border-color: var(--danger-color);
-    color: #fecaca; /* lighter red text */
+    color: #fecaca;
 }
 
 .alert-warning {
-    background-color: rgba(245, 158, 11, 0.2); /* amber-500 with opacity */
+    background-color: rgba(245, 158, 11, 0.2);
     border-color: var(--warning-color);
-    color: #fde68a; /* lighter amber text */
+    color: #fde68a;
 }
 
 .alert-info {
-    background-color: rgba(59, 130, 246, 0.2); /* blue-500 with opacity */
+    background-color: rgba(59, 130, 246, 0.2);
     border-color: var(--info-color);
-    color: #bfdbfe; /* lighter blue text */
+    color: #bfdbfe;
 }
 
-/* --- Tables (for Admin User List) --- */
+/* --- Tables (for Admin User List - Auth App) --- */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1.5rem;
     margin-bottom: 1.5rem;
-    /* box-shadow: 0 1px 3px rgba(0,0,0,0.2); Darker shadow for dark theme */
 }
 
 table th, table td {
@@ -345,17 +383,17 @@ table th, table td {
 }
 
 table th {
-    background-color: var(--secondary-hover-color); /* slate-700 */
+    background-color: var(--secondary-hover-color);
     font-weight: 600;
     color: var(--heading-text-color);
 }
 
 table tr:nth-child(even) {
-    background-color: rgba(71, 85, 105, 0.3); /* slate-600 with opacity for striping */
+    background-color: rgba(71, 85, 105, 0.3);
 }
 
 table tr:hover {
-    background-color: rgba(71, 85, 105, 0.6); /* Slightly more opaque slate-600 */
+    background-color: rgba(71, 85, 105, 0.6);
 }
 
 table .btn {
@@ -369,7 +407,7 @@ table form {
 }
 
 
-/* --- Footer --- */
+/* --- Footer (Auth App) --- */
 footer {
     text-align: center;
     padding: 25px 0;
@@ -379,89 +417,83 @@ footer {
     font-size: 0.9rem;
 }
 
-/* --- Utility Classes (Keep as is or adapt) --- */
-.text-center { text-align: center; }
-.mt-1 { margin-top: 0.5rem; }
-.mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mb-1 { margin-bottom: 0.5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 1.5rem; }
+/* --- Quiz Game Specific Styles --- */
 
-/* --- Responsiveness --- */
-@media (max-width: 768px) {
-    header .container {
-        flex-direction: column;
-        align-items: center;
-    }
-    nav ul {
-        margin-top: 10px;
-        flex-direction: column;
-        width: 100%;
-    }
-    nav li {
-        margin-left: 0;
-        margin-bottom: 5px;
-        width: 100%;
-        text-align: center;
-    }
-    nav a, nav .btn-link-style {
-        display: block;
-    }
-
-    .container {
-        width: 95%;
-    }
-
-    .main-content {
-        padding: 20px 15px;
-    }
-
-    /* Responsive table for dark theme */
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-    table thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
-    table tr {
-        border: 1px solid var(--border-color);
-        margin-bottom: 0.5rem;
-        background-color: var(--card-background-color); /* Ensure cards are distinct */
-    }
-    table td {
-        border: none;
-        border-bottom: 1px solid var(--border-color); /* Subtle separator */
-        position: relative;
-        padding-left: 50%;
-        text-align: left;
-        color: var(--text-color);
-    }
-    table td:last-child {
-        border-bottom: none;
-    }
-    table td:before {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        left: 10px; /* Adjust for padding */
-        width: calc(50% - 20px); /* Adjust for padding */
-        padding-right: 10px;
-        white-space: nowrap;
-        content: attr(data-label);
-        font-weight: 600; /* Bolder labels */
-        color: var(--muted-text-color);
-    }
+/* Player list items in lobby */
+.player-entry {
+    background-color: rgba(0,0,0,0.15); /* Slightly darker than card for contrast */
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+.player-name {
+    font-weight: 500;
+}
+.player-host-badge {
+    background-color: var(--primary-color);
+    color: var(--button-text-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px; /* pill shape */
 }
 
-/* --- Quiz Game Option Button Styling --- */
+/* Live scores in quiz */
+.player-entry-quiz {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    color: var(--text-color);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.player-entry-quiz:last-child {
+    border-bottom: none;
+}
+.player-name-quiz {
+    font-weight: 500;
+}
+.player-score-quiz {
+    font-weight: 600;
+    color: var(--heading-text-color);
+}
+.player-streak-quiz {
+    font-size: 0.8rem;
+    color: var(--muted-text-color);
+    margin-left: 0.5rem;
+}
+.current-player-highlight .player-name-quiz,
+.current-player-highlight .player-score-quiz {
+    color: var(--primary-color); /* Highlight current player's score */
+}
+
+
+/* Final scores display */
+.final-score-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.final-score-entry:last-child {
+    border-bottom: none;
+}
+.final-score-gold { color: #ffd700; font-weight: bold; }
+.final-score-silver { color: #c0c0c0; font-weight: bold; }
+.final-score-bronze { color: #cd7f32; font-weight: bold; }
+
+
+/* --- Quiz Game Option Button Styling (from user's original style.css) --- */
 .option-btn {
     width: 100%;
     padding: 1rem;
     border-radius: var(--border-radius);
-    color: var(--heading-text-color);
+    color: var(--heading-text-color); /* Ensure text color matches theme */
     font-weight: 500;
     border: 1px solid var(--border-color);
     transition: all 150ms ease-in-out;
@@ -470,7 +502,12 @@ footer {
     min-height: 4.5rem;
     text-align: left;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    background-color: var(--card-background-color);
+    background-color: var(--secondary-color); /* Use secondary color for options */
+}
+
+.option-btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover-color);
+    border-color: var(--primary-color);
 }
 
 .option-btn:focus {
@@ -493,19 +530,23 @@ footer {
 }
 
 .option-text {
-    color: var(--heading-text-color);
+    /* color: var(--heading-text-color); */ /* Already inherited */
     font-weight: 500;
     font-size: 1rem;
     flex-grow: 1;
 }
 
 /* Option button states */
+.option-btn.selected, /* Player's current selection before revealing answer */
+.option-btn.correct,
+.option-btn.incorrect-picked,
+.option-btn.reveal-correct {
+    color: #ffffff; /* White text for all active states */
+}
 .option-btn.selected .option-index,
 .option-btn.selected .option-text,
 .option-btn.correct .option-index,
 .option-btn.correct .option-text,
-.option-btn.correct.selected .option-index,
-.option-btn.correct.selected .option-text,
 .option-btn.incorrect-picked .option-index,
 .option-btn.incorrect-picked .option-text,
 .option-btn.reveal-correct .option-index,
@@ -513,40 +554,123 @@ footer {
     color: #ffffff;
 }
 
-.option-btn.correct {
+
+.option-btn.selected { /* When player clicks an option */
+    background-color: var(--primary-color);
+    border-color: var(--primary-hover-color);
+    box-shadow: 0 0 8px var(--focus-ring-color);
+}
+
+.option-btn.correct { /* After reveal, if this was the correct one they picked */
     background-color: var(--success-color);
-    border-color: #4ade80; /* green-400 */
-    color: #ffffff;
+    border-color: var(--success-hover-color);
     box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
 }
 
-.option-btn.incorrect-picked {
+.option-btn.incorrect-picked { /* After reveal, if this was the incorrect one they picked */
     background-color: var(--danger-color);
-    border-color: #f87171; /* red-400 */
-    color: #ffffff;
+    border-color: var(--danger-hover-color);
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
-.option-btn.reveal-correct {
-    background-color: #14b8a6; /* teal-500 */
-    border-color: #2dd4bf; /* teal-400 */
+.option-btn.reveal-correct { /* After reveal, this is the correct answer (if not picked by player) */
+    background-color: var(--success-color); /* Keep it green */
+    border-color: var(--success-hover-color);
+}
+
+.flash-correct { /* Animation for revealing the correct answer */
+    animation: flash 0.5s 6;
+    background-color: var(--success-color); /* Start with success color */
+    border-color: var(--success-hover-color);
+    color: #ffffff;
+}
+.flash-correct .option-index, .flash-correct .option-text {
     color: #ffffff;
 }
 
-.flash-correct {
-    animation: flash 0.5s 6;
-    background-color: #14b8a6; /* teal-500 */
-    border-color: #2dd4bf; /* teal-400 */
-    color: #ffffff;
-}
 
 @keyframes flash {
-    0%, 100% { 
-        opacity: 1; 
-        transform: scale(1); 
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        background-color: var(--success-color);
     }
-    50% { 
-        opacity: 0.4; 
-        transform: scale(1.03); 
+    50% {
+        opacity: 0.4;
+        transform: scale(1.03);
+        background-color: var(--success-hover-color); /* Flash to slightly different shade */
+    }
+}
+
+
+/* --- Responsiveness (Auth App - Keep or adapt as needed) --- */
+@media (max-width: 768px) {
+    header .container {
+        flex-direction: column;
+        align-items: center;
+    }
+    nav ul {
+        margin-top: 10px;
+        flex-direction: column;
+        width: 100%;
+    }
+    nav li {
+        margin-left: 0;
+        margin-bottom: 5px;
+        width: 100%;
+        text-align: center;
+    }
+    nav a, nav .btn-link-style {
+        display: block;
+    }
+
+    .container { /* General container for auth app pages */
+        width: 95%;
+    }
+
+    .main-content { /* For quiz game cards */
+        padding: 1.5rem; /* Slightly less padding on mobile */
+        margin-top: 1rem;
+    }
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.3rem; }
+
+
+    /* Responsive table for dark theme (Auth App Admin) */
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    table tr {
+        border: 1px solid var(--border-color);
+        margin-bottom: 0.5rem;
+        background-color: var(--card-background-color);
+    }
+    table td {
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        padding-left: 50%;
+        text-align: left;
+        color: var(--text-color);
+    }
+    table td:last-child {
+        border-bottom: none;
+    }
+    table td:before {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 10px;
+        width: calc(50% - 20px);
+        padding-right: 10px;
+        white-space: nowrap;
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted-text-color);
     }
 }

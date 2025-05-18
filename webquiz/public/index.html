@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Multiplayer Quiz</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white font-inter flex flex-col items-center justify-center min-h-screen p-4 selection:bg-sky-500 selection:text-white">
+<body class="font-inter flex flex-col items-center justify-center min-h-screen p-4 selection:bg-sky-500 selection:text-white" style="background-color: var(--background-color); color: var(--text-color);">
 
-<button id="mute-btn" class="fixed bottom-5 right-5 text-white font-semibold py-2 px-4 rounded-lg shadow-md z-50 transition-all duration-300 opacity-80 hover:opacity-100 bg-sky-600 hover:bg-sky-700">
+<button id="mute-btn" class="btn btn-secondary fixed bottom-5 right-5 z-50 opacity-80 hover:opacity-100">
     Mute
 </button>
 
@@ -20,84 +20,84 @@
     <p id="pause-resume-message" class="text-slate-300 text-lg">Der Host kann das Spiel fortsetzen.</p>
 </div>
 
-<div id="lobby-connect-container" class="w-full max-w-md bg-slate-800 p-8 rounded-xl shadow-2xl text-center">
-    <h1 class="text-4xl font-bold mb-8 text-sky-400">Quiz Master</h1>
-    <div class="mb-6">
-        <label for="player-name" class="block text-lg mb-2 text-slate-300">Dein Name:</label>
-        <input type="text" id="player-name" placeholder="QuizWhiz" class="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:ring-2 focus:ring-sky-500 outline-none transition-all" maxlength="20">
+<div id="lobby-connect-container" class="main-content w-full max-w-md text-center">
+    <h1 class="text-4xl font-bold mb-8" style="color: var(--primary-color);">Quiz Master</h1>
+    <div class="form-group mb-6">
+        <label for="player-name" class="block text-lg mb-2 text-left">Dein Name:</label>
+        <input type="text" id="player-name" placeholder="QuizWhiz" class="form-control" maxlength="20">
     </div>
-    <button id="create-lobby-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 mb-4">
+    <button id="create-lobby-btn" class="btn btn-success w-full text-lg mb-4">
         Lobby erstellen
     </button>
     <div class="flex items-center my-6">
-        <hr class="flex-grow border-slate-600">
-        <span class="px-4 text-slate-400">ODER</span>
-        <hr class="flex-grow border-slate-600">
+        <hr class="flex-grow" style="border-top-color: var(--border-color);">
+        <span class="px-4" style="color: var(--muted-text-color);">ODER</span>
+        <hr class="flex-grow" style="border-top-color: var(--border-color);">
     </div>
-    <div class="mb-4">
-        <label for="lobby-id-input" class="block text-lg mb-2 text-slate-300">Lobby ID beitreten:</label>
-        <input type="text" id="lobby-id-input" placeholder="LOBBYID" class="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:ring-2 focus:ring-sky-500 outline-none transition-all uppercase" maxlength="6">
+    <div class="form-group mb-4">
+        <label for="lobby-id-input" class="block text-lg mb-2 text-left">Lobby ID beitreten:</label>
+        <input type="text" id="lobby-id-input" placeholder="LOBBYID" class="form-control uppercase" maxlength="6">
     </div>
-    <button id="join-lobby-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105">
+    <button id="join-lobby-btn" class="btn w-full text-lg">
         Lobby beitreten
     </button>
     <p id="connect-error-msg" class="text-red-400 mt-4 h-6"></p>
 </div>
 
-<div id="lobby-waiting-room" class="hidden w-full max-w-lg bg-slate-800 p-8 rounded-xl shadow-2xl">
+<div id="lobby-waiting-room" class="hidden main-content w-full max-w-lg">
     <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-sky-400">Lobby <span id="display-lobby-id" class="text-amber-400"></span></h2>
-        <button id="copy-lobby-id-btn" title="Lobby ID kopieren" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+        <h2 class="text-3xl font-bold" style="color: var(--primary-color);">Lobby <span id="display-lobby-id" class="text-amber-400"></span></h2>
+        <button id="copy-lobby-id-btn" title="Lobby ID kopieren" class="p-2 rounded-lg transition-colors" style="background-color: var(--secondary-color); color: var(--heading-text-color);" onmouseover="this.style.backgroundColor='var(--secondary-hover-color)';" onmouseout="this.style.backgroundColor='var(--secondary-color)';">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
                 <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
                 <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
             </svg>
         </button>
     </div>
-    <p class="text-slate-400 mb-2">Warte auf Spieler... Teile die Lobby ID, um andere einzuladen.</p>
+    <p style="color: var(--muted-text-color);" class="mb-2">Warte auf Spieler... Teile die Lobby ID, um andere einzuladen.</p>
 
-    <div id="player-list-lobby" class="mb-6 min-h-[80px] bg-slate-700 p-4 rounded-lg space-y-2">
+    <div id="player-list-lobby" class="mb-6 min-h-[80px] p-4 rounded-lg space-y-2" style="background-color: var(--background-color);">
     </div>
 
-    <div id="category-selection-container" class="mb-6 hidden">
-        <label for="category-select" class="block text-lg mb-2 text-slate-300 font-semibold">
+    <div id="category-selection-container" class="form-group mb-6 hidden">
+        <label for="category-select" class="block text-lg mb-2 font-semibold">
             Fragenkategorie auswählen:
         </label>
-        <select id="category-select" class="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:ring-2 focus:ring-sky-500 outline-none transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+        <select id="category-select" class="form-control cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
         </select>
-        <p class="text-sm text-slate-400 mt-1">Nur der Host kann die Kategorie ändern.</p>
+        <p class="text-sm mt-1" style="color: var(--muted-text-color);">Nur der Host kann die Kategorie ändern.</p>
     </div>
 
-    <p id="chosen-category-display" class="text-center text-slate-300 mb-4 h-6 hidden">
+    <p id="chosen-category-display" class="text-center mb-4 h-6 hidden" style="color: var(--text-color);">
         Ausgewählte Kategorie: <span id="current-category-text" class="font-semibold text-amber-300"></span>
     </p>
 
     <p id="lobby-message" class="text-center text-amber-300 mb-4 h-6"></p>
 
-    <button id="start-game-lobby-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+    <button id="start-game-lobby-btn" class="btn btn-success w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed">
         Spiel starten
     </button>
     <p id="start-game-error-msg" class="text-red-400 mt-4 h-6 text-center"></p>
 </div>
 
-<div id="quiz-container" class="hidden w-full max-w-2xl bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl">
+<div id="quiz-container" class="hidden main-content w-full max-w-2xl">
     <div class="flex justify-between items-center mb-1">
-        <div id="player-info-quiz" class="text-lg font-semibold text-sky-400">Dein Name (Punkte: 0)</div>
-        <div id="question-counter" class="text-sm text-slate-400">F: 1/10</div>
+        <div id="player-info-quiz" class="text-lg font-semibold" style="color: var(--primary-color);">Dein Name (Punkte: 0)</div>
+        <div id="question-counter" class="text-sm" style="color: var(--muted-text-color);">F: 1/10</div>
         <div id="timer" class="text-2xl font-bold text-amber-400">60s</div>
     </div>
 
     <div class="flex justify-end space-x-2 my-2">
-        <button id="host-toggle-pause-btn" class="hidden bg-amber-500 hover:bg-amber-600 text-white font-semibold py-1.5 px-4 rounded-lg text-sm shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50">Pause Spiel</button>
-        <button id="host-skip-to-end-btn" class="hidden bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-4 rounded-lg text-sm shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50">Skip to End</button>
+        <button id="host-toggle-pause-btn" class="hidden btn btn-warning btn-sm">Pause Spiel</button>
+        <button id="host-skip-to-end-btn" class="hidden btn btn-danger btn-sm">Skip to End</button>
     </div>
 
-    <div class="text-center text-sm text-slate-400 mb-3">
-        Kategorie: <span id="game-category-display" class="font-semibold text-sky-300">-</span>
+    <div class="text-center text-sm mb-3" style="color: var(--muted-text-color);">
+        Kategorie: <span id="game-category-display" class="font-semibold" style="color: var(--primary-color); opacity: 0.8;">-</span>
     </div>
 
-    <div id="question-area" class="mb-6 bg-slate-700/50 p-6 rounded-lg shadow-inner">
-        <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-slate-100 leading-relaxed min-h-[60px] text-center">
+    <div id="question-area" class="mb-6 p-6 rounded-lg shadow-inner" style="background-color: rgba(0,0,0,0.1);">
+        <h2 id="question-text" class="text-xl md:text-2xl font-semibold leading-relaxed min-h-[60px] text-center" style="color: var(--heading-text-color);">
             Frage erscheint hier...
         </h2>
     </div>
@@ -109,36 +109,35 @@
         <p id="feedback-text" class="text-lg font-medium"></p>
     </div>
 
-    <div id="scoreboard-quiz" class="mb-4 p-4 bg-slate-700/70 rounded-lg shadow">
-        <h3 class="text-lg font-bold text-sky-300 mb-3 text-center border-b border-slate-600 pb-2">Live Punktestand</h3>
+    <div id="scoreboard-quiz" class="mb-4 p-4 rounded-lg shadow" style="background-color: rgba(0,0,0,0.15);">
+        <h3 class="text-lg font-bold mb-3 text-center border-b pb-2" style="color: var(--primary-color); border-color: var(--border-color);">Live Punktestand</h3>
         <div id="live-scores-list" class="text-sm space-y-2">
         </div>
     </div>
-    <p id="waiting-for-others-msg" class="text-center text-slate-400 my-4 h-6"></p>
+    <p id="waiting-for-others-msg" class="text-center my-4 h-6" style="color: var(--muted-text-color);"></p>
 </div>
 
-<div id="game-over-container" class="hidden w-full max-w-md bg-slate-800 p-8 rounded-xl shadow-2xl text-center">
-    <h1 class="text-4xl font-bold mb-6 text-sky-400">Spiel vorbei!</h1>
+<div id="game-over-container" class="hidden main-content w-full max-w-md text-center">
+    <h1 class="text-4xl font-bold mb-6" style="color: var(--primary-color);">Spiel vorbei!</h1>
     <div id="final-scores" class="mb-8 space-y-2">
     </div>
-    <button id="submit-score-hall-of-fame-btn" class="hidden w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 mb-4">
+    <button id="submit-score-hall-of-fame-btn" class="hidden btn btn-info w-full text-lg mb-4">
         Submit to Hall of Fame
     </button>
-    <p id="submit-score-status-msg" class="text-slate-300 my-2 h-6"></p>
+    <p id="submit-score-status-msg" class="my-2 h-6" style="color: var(--text-color);"></p>
 
-
-    <button id="play-again-host-btn" class="hidden w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 mb-4 disabled:opacity-50 disabled:cursor-not-allowed">
+    <button id="play-again-host-btn" class="hidden btn btn-success w-full text-lg mb-4 disabled:opacity-50 disabled:cursor-not-allowed">
         Erneut spielen (Host)
     </button>
-    <button id="waiting-for-host-play-again-btn" class="hidden w-full bg-slate-600 text-white font-bold py-3 px-6 rounded-lg text-lg cursor-default mb-4">
+    <button id="waiting-for-host-play-again-btn" class="hidden btn w-full text-lg cursor-default mb-4" style="background-color: var(--secondary-color); border-color: var(--secondary-color);" disabled>
         Warte auf Host für neues Spiel...
     </button>
-    <button id="leave-lobby-btn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105">
+    <button id="leave-lobby-btn" class="btn btn-warning w-full text-lg">
         Lobby verlassen / Neues Spiel
     </button>
 </div>
 
-<div id="global-notification" class="fixed top-5 right-5 bg-red-500 text-white p-4 rounded-lg shadow-xl text-sm z-50 hidden animate-pulse">
+<div id="global-notification" class="fixed top-5 right-5 p-4 rounded-lg shadow-xl text-sm z-50 hidden animate-pulse">
     Fehlermeldung hier
 </div>
 
