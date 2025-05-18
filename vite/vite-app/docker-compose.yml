@@ -1,0 +1,14 @@
+services:
+  formula-app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./vite.config.ts:/app/vite.config.ts
+    networks:
+      - npm_network
+networks:
+  npm_network:
+    external: true
