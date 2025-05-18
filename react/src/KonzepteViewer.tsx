@@ -511,4 +511,5 @@ const KonzepteViewer: React.FC = () => {
                     }
                 }
             }
-        });}
+        });})};
+
