@@ -6,20 +6,15 @@ services:
     ports:
       - "${MONGO_DOCKER_HOST_PORT:-27017}:27017"
     environment:
-      # These variables are used by MongoDB on its first startup to create a root user.
-      # Ensure these match what you intend to use for authentication.
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root} # Defaults to 'root' if MONGO_ROOT_USER is not in .env
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-example} # Defaults to 'example' if MONGO_ROOT_PASSWORD is not in .env
-      # The MONGO_INITDB_DATABASE is where this user gets admin privileges, typically 'admin'.
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-example}
     volumes:
-      # Changed from named volume 'mongo_data' to a host path binding.
-      # This will map the host directory /home/patrick/data/db to /data/db inside the container.
-      # Ensure /home/patrick/data/db exists on your host and Docker has permissions.
-      - /home/patrick/data/db:/data/db # Persists MongoDB data to host path
+      # Persists MongoDB data to a host path.
+      # IMPORTANT: Ensure /home/patrick/data/db exists on your host or change this path.
+      # Alternatively, use a Docker named volume for better portability:
+      # - mongo_data:/data/db
+      - /home/patrick/data/db:/data/db
     healthcheck:
-      # This command runs inside the mongo container to check its health.
-      # It attempts to ping MongoDB using the root credentials.
-      # If MONGO_ROOT_USER/PASSWORD are not in your .env, it uses 'root'/'example'.
       test: |
         mongosh \
         --norc \
@@ -29,31 +24,34 @@ services:
         --authenticationDatabase "${MONGO_AUTH_SOURCE_DB:-admin}" \
         --eval "try { db.adminCommand('ping') } catch (e) { print(e); quit(1); }" \
         --quiet
-      interval: 15s # Check health every 15 seconds
-      timeout: 10s # Wait up to 10 seconds for the check to complete
-      retries: 5 # Retry 5 times on failure before marking as unhealthy
-      start_period: 40s # Wait 40 seconds after container starts before first health check (allows MongoDB to initialize)
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - npm_network # Connect to the external network
 
   auth-app:
-    image: node:20
+    build:
+      context: ./js-auth # Path to your auth app's source code and Dockerfile
+      dockerfile: Dockerfile # Assumes Dockerfile is named 'Dockerfile' in the context path
     container_name: js-auth
+    restart: always
     working_dir: /usr/src/app
     volumes:
-      - ./js-auth:/usr/src/app
+      - ./js-auth:/usr/src/app # Mounts local source for development
+      - /usr/src/app/node_modules # Avoids overwriting node_modules from host
     command: sh -c "npm install && node app.js"
     ports:
       - "${APP_DOCKER_HOST_PORT:-7001}:${AUTH_APP_CONTAINER_PORT:-7000}"
     environment:
-      NODE_ENV: ${NODE_ENV}
-      PORT: ${AUTH_APP_CONTAINER_PORT}
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${AUTH_APP_CONTAINER_PORT:-7000}
       APP_BASE_URL: ${APP_BASE_URL}
-      # This URI is used by your application to connect to MongoDB.
-      # It MUST use the same credentials (MONGO_ROOT_USER, MONGO_ROOT_PASSWORD)
-      # and authSource (MONGO_AUTH_SOURCE_DB) that MongoDB was initialized with.
-      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_AUTH_DB_NAME}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
-      MONGO_AUTH_DB_NAME: ${MONGO_AUTH_DB_NAME} # The database your auth app will primarily use
-      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME} # Database for session storage
-      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Auth DB, typically 'admin' for root user
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_AUTH_DB_NAME:-js_auth_db}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
+      MONGO_AUTH_DB_NAME: ${MONGO_AUTH_DB_NAME:-js_auth_db}
+      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME:-js_auth_db} # Used if auth app also stores sessions separately or for consistency
+      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin}
       SESSION_SECRET: ${SESSION_SECRET}
       CSRF_SECRET: ${CSRF_SECRET}
       MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
@@ -64,31 +62,53 @@ services:
       FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD}
     depends_on:
       mongo:
-        condition: service_healthy # Waits for mongo service to pass its healthcheck
+        condition: service_healthy
+    networks:
+      - npm_network # Connect to the external network
 
   quiz-app:
-    image: node:20
+    build:
+      context: ./webquiz # Path to your quiz app's source code and Dockerfile
+      dockerfile: Dockerfile # Assumes Dockerfile is named 'Dockerfile' in the context path
     container_name: webquiz
+    restart: always
     working_dir: /usr/src/app
     volumes:
-      - ./webquiz:/usr/src/app
-    command: sh -c "npm install && node server.js"
+      - ./webquiz:/usr/src/app # Mounts local source for development
+      - /usr/src/app/node_modules # Avoids overwriting node_modules from host
+    # Ensure your quiz-app's Dockerfile uses CMD ["node", "index.js"]
+    # This command will run npm install on every start if node_modules isn't persisted correctly.
+    # For production, you'd typically rely on RUN npm install in the Dockerfile and just use `node index.js`.
+    command: sh -c "npm install && node index.js"
     ports:
       - "${QUIZ_APP_HOST_PORT:-4000}:${QUIZ_APP_CONTAINER_PORT:-3000}"
     environment:
-      NODE_ENV: ${NODE_ENV}
-      PORT: ${QUIZ_APP_CONTAINER_PORT}
-      # Ensure this URI also uses the correct credentials if it needs to authenticate.
-      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_SESSIONS_DB_NAME}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
-      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME} # The database your quiz app will use for sessions
-      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Auth DB, typically 'admin' for root user
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${QUIZ_APP_CONTAINER_PORT:-3000}
+      # This MONGO_URI is for the quiz-app's session store
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongo:27017/${MONGO_SESSIONS_DB_NAME:-js_auth_db}?authSource=${MONGO_AUTH_SOURCE_DB:-admin}&directConnection=true
+      MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME:-js_auth_db}
+      MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Usually 'admin' for the root user
       SESSION_SECRET: ${SESSION_SECRET}
+      # ALLOWED_ORIGINS is used by server_1.js (quiz app) for CORS.
+      # Set this in your .env file. Example: "http://localhost:4000,https://game.yourdomain.com"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4000}
+      # CSRF_SECRET and APP_BASE_URL are included as they were in your previous compose snippet for quiz-app,
+      # though server_1.js doesn't directly use them.
       CSRF_SECRET: ${CSRF_SECRET}
-      APP_BASE_URL: ${APP_BASE_URL}
+      APP_BASE_URL: ${QUIZ_APP_BASE_URL} # Define QUIZ_APP_BASE_URL in .env if needed by quiz app
     depends_on:
       mongo:
-        condition: service_healthy # Waits for mongo service to pass its healthcheck
+        condition: service_healthy
+    networks:
+      - npm_network # Connect to the external network
 
-# Removed the named volume 'mongo_data' as we are now using a host path bind mount.
+networks:
+  npm_network: # Define npm_network
+    external: true # Specify that it's an externally created network
+
+# The local 'quiznet' network definition has been removed.
+
+# If you were using a named volume for mongo_data instead of a host path:
 # volumes:
-#   mongo_data: # Defines the named volume for MongoDB data persistence
+#   mongo_data:

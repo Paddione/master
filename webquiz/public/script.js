@@ -1,416 +1,16 @@
-if(optionsContainer) {
-    optionsContainer.innerHTML = '';
-    const optionIndices = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)'];
-
-    data.options.forEach((optionText, index) => {
-        const button = document.createElement('button');
-        button.className = 'option-btn';
-        button.disabled = isGamePaused;
-
-        const indexSpan = document.createElement('span');
-        indexSpan.className = 'option-index';
-        indexSpan.textContent = optionIndices[index % optionIndices.length];
-
-        const textSpan = document.createElement('span');
-        textSpan.className = 'option-text';
-        textSpan.textContent = optionText;
-
-        button.appendChild(indexSpan);
-        button.appendChild(textSpan);
-
-        // Default styling for options
-        button.classList.add('bg-slate-700', 'border-slate-600', 'hover:bg-sky-700', 'hover:border-sky-500');
-        button.classList.remove('selected', 'correct', 'incorrect-picked', 'reveal-correct', 'flash-correct');
-
-
-        button.addEventListener('click', () => {
-            playSound('click');
-            optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
-                btn.disabled = true;
-                btn.classList.remove('selected', 'ring-4', 'ring-white'); // Remove selection visual
-                // Reset to default non-selected style
-                btn.classList.add('bg-slate-700', 'border-slate-600', 'hover:bg-sky-700', 'hover:border-sky-500');
-                btn.classList.remove('bg-sky-500', 'border-sky-400');
-            });
-            button.classList.add('selected', 'bg-sky-500', 'border-sky-400', 'ring-4', 'ring-white'); // Add selection visual
-            button.classList.remove('bg-slate-700', 'border-slate-600', 'hover:bg-sky-700', 'hover:border-sky-500');
-
-            socket.emit('submitAnswer', {
-                lobbyId: currentLobbyId,
-                questionIndex: currentQuestionIndex,
-                answer: optionText
-            });
-            if(feedbackText) feedbackText.textContent = '';
-            if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Antwort übermittelt. Warte auf andere Spieler oder Timer...";
-        });
-        optionsContainer.appendChild(button);
-    });
-}
-if(feedbackText) feedbackText.textContent = '';
-if(waitingForOthersMsg) waitingForOthersMsg.textContent = '';
-if(timerDisplay) {
-    timerDisplay.textContent = isGamePaused ? 'Pausiert' : `${questionTimeLimit}s`;
-    timerDisplay.classList.remove('text-red-500', 'text-amber-400');
-    if (!isGamePaused) timerDisplay.classList.add('text-amber-400');
-}
-});
-
-socket.on('updateScores', (playersScoreData) => {
-    if(quizContainer) quizContainer.dataset.players = JSON.stringify(playersScoreData);
-    updateLiveScores(playersScoreData);
-    const me = playersScoreData.find(p => p.id === currentPlayerId);
-    if (me && playerInfoQuiz) {
-        playerInfoQuiz.textContent = `${me.name} (Punkte: ${me.score})`;
-    }
-});
-
-socket.on('timerUpdate', (timeLeft) => {
-    if (isGamePaused) {
-        if(timerDisplay) {
-            timerDisplay.textContent = isHost ?
-                `Pausiert (${Math.ceil(timeLeft)}s)` :
-                `Pausiert`;
-        }
-        return;
-    }
-    if(!timerDisplay) return;
-    timerDisplay.textContent = `${timeLeft}s`;
-    if (timeLeft <= 5 && timeLeft > 0) {
-        timerDisplay.classList.remove('text-amber-400');
-        timerDisplay.classList.add('text-red-500');
-    } else if (timeLeft === 0) {
-        wasTimedOut = true;
-        timerDisplay.classList.add('text-red-500');
-        if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Zeit abgelaufen! Antwort wird aufgedeckt...";
-        if(optionsContainer) optionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-    } else {
-        timerDisplay.classList.remove('text-red-500');
-        timerDisplay.classList.add('text-amber-400');
-    }
-});
-
-socket.on('answerResult', (data) => {
-    console.log('[DEBUG] answerResult received:', data);
-
-    // Play appropriate sound
-    if (data.isCorrect) {
-        playSound('correctAnswer');
-        if (data.streak && data.streak > 1) {
-            // Play streak sound for streaks of 2+
-            playSound('streak');
-        }
-    } else {
-        playSound('incorrectAnswer');
-    }
-
-    // Update player's own score display immediately if possible
-    const meFromDataset = quizContainer.dataset.players ? JSON.parse(quizContainer.dataset.players).find(p => p.id === currentPlayerId) : null;
-    if (meFromDataset && playerInfoQuiz) {
-        meFromDataset.score = data.score; // Update score from server result
-        meFromDataset.streak = data.streak;
-        playerInfoQuiz.textContent = `${meFromDataset.name} (Punkte: ${meFromDataset.score})`;
-        // Update the dataset as well
-        const players = JSON.parse(quizContainer.dataset.players);
-        const playerIndex = players.findIndex(p => p.id === currentPlayerId);
-        if (playerIndex !== -1) {
-            players[playerIndex].score = data.score;
-            players[playerIndex].streak = data.streak;
-            quizContainer.dataset.players = JSON.stringify(players);
-        }
-    }
-
-    if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Warte auf Ergebnisse aller Spieler...";
-    if(feedbackText) {
-        if (data.isCorrect) {
-            feedbackText.textContent = `Richtig! ${data.streak > 1 ? `Streak: ${data.streak}` : ''}`;
-            feedbackText.className = 'text-lg font-medium text-green-400';
-        } else {
-            feedbackText.textContent = 'Leider falsch!';
-            feedbackText.className = 'text-lg font-medium text-red-400';
-        }
-    }
-
-    // Highlight the player's chosen button based on correctness
-    if (optionsContainer) {
-        optionsContainer.querySelectorAll('.option-btn.selected').forEach(btn => {
-            btn.classList.remove('bg-sky-500', 'border-sky-400'); // Remove generic selected style
-            if (data.isCorrect) {
-                btn.classList.add('correct'); // Uses .correct style from CSS
-            } else {
-                btn.classList.add('incorrect-picked'); // Uses .incorrect-picked style from CSS
-            }
-        });
-    }
-});
-
-socket.on('questionOver', (data) => {
-    console.log('[DEBUG] questionOver received:', data, 'wasTimedOut:', wasTimedOut);
-    if (wasTimedOut && !isGamePaused) {
-        playSound('timesUp');
-    }
-    wasTimedOut = false;
-
-    if(feedbackText) {
-        feedbackText.textContent = ''; // Clear "registered" message
-    }
-    if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Richtige Antwort wird aufgedeckt...";
-
-    if(optionsContainer) {
-        optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
-            btn.disabled = true; // Ensure all buttons are disabled
-            // Remove selection-specific styles if not already handled by answerResult
-            btn.classList.remove('selected', 'ring-4', 'ring-white', 'bg-sky-500', 'border-sky-400');
-
-            const btnText = btn.querySelector('.option-text').textContent.trim(); // Get text from span
-            const correctAnswerText = data.correctAnswer.trim();
-
-            // If this button was the correct answer, apply reveal-correct and flash
-            if (btnText === correctAnswerText) {
-                btn.classList.remove('incorrect-picked', 'correct', 'bg-slate-700', 'border-slate-600');
-                btn.classList.add('flash-correct'); // Applies base style and animation
-                // Remove flash class after animation completes so style persists if needed
-                setTimeout(() => {
-                    btn.classList.remove('flash-correct');
-                    // Optionally, ensure it stays styled as 'reveal-correct' if flash-correct doesn't persist the style
-                    if (!btn.classList.contains('correct') && !btn.classList.contains('incorrect-picked')) {
-                        btn.classList.add('reveal-correct'); // Fallback to persistent correct style
-                    }
-                }, 3000); // Match animation duration (0.5s * 6 iterations)
-            } else if (!btn.classList.contains('incorrect-picked') && !btn.classList.contains('correct')) {
-                // If it's not the correct one and wasn't picked, ensure default disabled style
-                btn.classList.add('bg-slate-700', 'border-slate-600', 'opacity-60');
-            }
-        });
-    }
-    updateLiveScores(data.scores); // Update scores with final for this question
-
-    const textToSpeak = `Die richtige Antwort war: ${data.correctAnswer}`;
-    speak(textToSpeak, 'de-DE', () => {
-        if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Nächste Frage kommt...";
-        // Server will send next question, no need for client to emit ready
-    }, false);
-});
-
-socket.on('gameOver', (data) => {
-    console.log('[DEBUG] gameOver event received:', data);
-    stopMenuMusic();
-    if (synth && synth.speaking) synth.cancel();
-    isGamePaused = false;
-    if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
-    if(hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden'); // Hide skip button on game over
-
-    if(finalScoresDiv) {
-        finalScoresDiv.innerHTML = ''; // Clear previous scores
-        data.finalScores.forEach((player, index) => {
-            const scoreEntry = document.createElement('div');
-            scoreEntry.className = 'final-score-entry';
-            let medal = '';
-            let medalClass = '';
-            if (index === 0) { medal = '🥇 '; medalClass = 'final-score-gold'; }
-            else if (index === 1) { medal = '🥈 '; medalClass = 'final-score-silver'; }
-            else if (index === 2) { medal = '🥉 '; medalClass = 'final-score-bronze'; }
-
-            if (medalClass) scoreEntry.classList.add(medalClass);
-
-            let displayName = player.name;
-            if (player.originalId === currentPlayerId) { // Assuming server sends originalId
-                displayName += " (Du)";
-            }
-
-            let statusIndicator = '';
-            if (player.disconnected) {
-                statusIndicator = '<span class="text-xs text-red-300 ml-2">(Getrennt)</span>';
-            }
-
-            scoreEntry.innerHTML = `<span>${medal}${displayName}${statusIndicator}</span><span>${player.score} Pkt</span>`;
-            finalScoresDiv.appendChild(scoreEntry);
-        });
-    }
-
-    // Show "Submit to Hall of Fame" button
-    if (submitScoreHallOfFameBtn) {
-        submitScoreHallOfFameBtn.classList.remove('hidden');
-        submitScoreHallOfFameBtn.disabled = false;
-    }
-    if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = '';
-
-    if (isHost) {
-        if(playAgainHostBtn) playAgainHostBtn.classList.remove('hidden');
-        if(playAgainHostBtn) playAgainHostBtn.disabled = false;
-        if(waitingForHostPlayAgainBtn) waitingForHostPlayAgainBtn.classList.add('hidden');
-    } else {
-        if(playAgainHostBtn) playAgainHostBtn.classList.add('hidden');
-        if(waitingForHostPlayAgainBtn) waitingForHostPlayAgainBtn.classList.remove('hidden');
-    }
-    showScreen(gameOverContainer);
-    startMenuMusic();
-});
-
-socket.on('lobbyResetForPlayAgain', (data) => {
-    console.log('[DEBUG] lobbyResetForPlayAgain received:', JSON.stringify(data));
-    if (synth && synth.speaking) synth.cancel();
-    currentLobbyId = data.lobbyId;
-    allAvailableCategoriesCache = Array.isArray(data.availableCategories) ? [...data.availableCategories] : [];
-    updatePlayerList(data.players, allAvailableCategoriesCache, data.selectedCategory); // This will update isHost
-    showScreen(lobbyWaitingRoom);
-    isGamePaused = false;
-    if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
-    if(hostTogglePauseBtn) {
-        hostTogglePauseBtn.textContent = 'Pause Spiel';
-        // Visibility handled by showScreen/updatePlayerList
-    }
-    if(hostSkipToEndBtn) {
-        // Visibility handled by showScreen/updatePlayerList
-    }
-
-    if(lobbyMessage) lobbyMessage.textContent = isHost ? "Spiel zurückgesetzt. Wähle Kategorie und starte!" : "Host hat das Spiel zurückgesetzt. Warte auf Start...";
-    if(startGameLobbyBtn) startGameLobbyBtn.disabled = !isHost || !categorySelect.value;
-    if(playAgainHostBtn) playAgainHostBtn.disabled = false; // Re-enable for host
-
-    // Hide Hall of Fame button and message
-    if (submitScoreHallOfFameBtn) submitScoreHallOfFameBtn.classList.add('hidden');
-    if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = '';
-});
-
-socket.on('gamePaused', (data) => {
-    console.log('[DEBUG] gamePaused event received. Remaining time:', data.remainingTime);
-    isGamePaused = true;
-    if (synth && synth.speaking) synth.cancel();
-    if(gamePausedOverlay) gamePausedOverlay.classList.remove('hidden');
-    if(pauseResumeMessage) {
-        pauseResumeMessage.textContent = isHost ?
-            "Spiel pausiert. (Leertaste zum Pausieren/Fortsetzen)" :
-            "Das Spiel ist pausiert. Warte auf den Host.";
-    }
-    if(hostTogglePauseBtn && isHost) {
-        hostTogglePauseBtn.textContent = 'Spiel fortsetzen';
-        hostTogglePauseBtn.disabled = false; // Host can always resume
-    }
-    if(hostSkipToEndBtn && isHost) { // Disable skip button when paused
-        hostSkipToEndBtn.disabled = true;
-    }
-
-    if(optionsContainer) optionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-    if(timerDisplay && data.remainingTime !== undefined) {
-        timerDisplay.textContent = isHost ? `Pausiert (${Math.ceil(data.remainingTime)}s)` : `Pausiert`;
-    } else if(timerDisplay) {
-        timerDisplay.textContent = 'Pausiert';
-    }
-});
-
-socket.on('gameResumed', () => {
-    console.log('[DEBUG] gameResumed event received.');
-    isGamePaused = false;
-    if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
-
-    if(hostTogglePauseBtn && isHost) {
-        hostTogglePauseBtn.textContent = 'Pause Spiel';
-        hostTogglePauseBtn.disabled = false;
-    }
-    if(hostSkipToEndBtn && isHost) { // Enable skip button when resumed
-        hostSkipToEndBtn.disabled = false;
-    }
-
-    if(optionsContainer) {
-        optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
-            const isAnsweredOrRevealed = btn.classList.contains('selected') ||
-                btn.classList.contains('correct') ||
-                btn.classList.contains('incorrect-picked') ||
-                btn.classList.contains('reveal-correct') ||
-                btn.classList.contains('flash-correct');
-            if (!isAnsweredOrRevealed) {
-                btn.disabled = false;
-            }
-        });
-    }
-    console.log('[DEBUG] gameResumed: UI updated for resume.');
-});
-
-// Add new event handler for skip to end confirmation
-socket.on('gameSkippedToEnd', () => {
-    console.log('[DEBUG] Game skipped to end by host');
-    if (synth && synth.speaking) synth.cancel();
-    showGlobalNotification('Der Host hat das Spiel beendet', 'info', 3000);
-});
-
-// Initial setup
-showScreen(lobbyConnectContainer);
-updateMuteButtonAppearance();
-const savedPlayerName = localStorage.getItem('quizPlayerName');
-if (savedPlayerName && playerNameInput) {
-    playerNameInput.value = savedPlayerName;
-}
-if(playerNameInput) playerNameInput.addEventListener('input', () => {
-    localStorage.setItem('quizPlayerName', playerNameInput.value);
-});
-if(lobbyIdInput) lobbyIdInput.addEventListener('input', () => {
-    lobbyIdInput.value = lobbyIdInput.value.toUpperCase();
-});
-
-// --- Hall of Fame Score Submission ---
-if (submitScoreHallOfFameBtn) {
-    submitScoreHallOfFameBtn.addEventListener('click', () => {
-        playSound('click');
-        const myPlayerName = playerNameInput.value.trim() || "Anonymous Quizzer";
-        let myFinalScore = 0;
-
-        // Try to get the score from the displayed final scores
-        const finalScoresEntries = finalScoresDiv.querySelectorAll('.final-score-entry');
-        finalScoresEntries.forEach(entry => {
-            const nameElement = entry.querySelector('span:first-child');
-            if (nameElement && nameElement.textContent.includes('(Du)')) {
-                const scoreElement = entry.querySelector('span:last-child');
-                if (scoreElement) {
-                    myFinalScore = parseInt(scoreElement.textContent, 10) || 0;
-                }
-            }
-        });
-
-        const questionSetName = currentQuestionDataCache ? currentQuestionDataCache.category : "Unknown Category";
-
-        if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = 'Submitting score...';
-        submitScoreHallOfFameBtn.disabled = true;
-
-        // The actual fetch to your auth-app's API endpoint
-        // This URL needs to point to your auth-app, e.g., http://localhost:7000 or https://auth.korczewski.de
-        const authAppUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:7000' : 'https://auth.korczewski.de';
-
-        fetch(`${authAppUrl}/api/hall-of-fame/submit`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // If your API requires CSRF token and this is a different origin,
-                // CSRF via custom headers might be tricky without proper CORS.
-                // For now, assuming session cookie handles auth if API is on same parent domain.
-            },
-            body: JSON.stringify({
-                playerName: myPlayerName,
-                questionSet: questionSetName,
-                score: myFinalScore
-            }),
-            credentials: 'include' // Important for cross-domain requests with cookies
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Score submitted successfully!') {
-                    if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = 'Score submitted!';
-                    showGlobalNotification('Score submitted to Hall of Fame!', 'success');
-                } else {
-                    if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = `Error: ${data.message || 'Could not submit score.'}`;
-                    showGlobalNotification(`Error: ${data.message || 'Could not submit score.'}`, 'error');
-                    submitScoreHallOfFameBtn.disabled = false; // Re-enable on error
-                }
-            })
-            .catch(error => {
-                console.error('Error submitting score to Hall of Fame:', error);
-                if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = 'Network error. Could not submit score.';
-                showGlobalNotification('Network error. Could not submit score.', 'error');
-                submitScoreHallOfFameBtn.disabled = false; // Re-enable on error
-            });
-    });
-}
-});
-// public/script.js
+/**
+ * script.js
+ * * CSP Refinements:
+ * This version addresses potential Content Security Policy (CSP) sensitivities
+ * by refactoring dynamic HTML generation. Specifically, instances of `element.innerHTML = "string" + variable + "string";`
+ * have been changed to use `document.createElement`, `element.appendChild`, and `element.textContent`
+ * for better security and to avoid any misinterpretation by strict CSP rules that might flag
+ * string concatenation in `innerHTML` as potentially unsafe (though it's not a direct 'eval').
+ * * Note: This script, even in previous versions, did not directly use `eval()`, `new Function()`,
+ * or string arguments in `setTimeout()` / `setInterval()`. If 'unsafe-eval' CSP errors persist,
+ * the cause likely lies in the server's CSP header configuration, inline scripts in the HTML,
+ * or third-party library interactions. Check the browser console for the exact source of the CSP violation.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io({
         withCredentials: true, // Important for session cookies
@@ -597,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMuted && soundName === 'click' && sounds[soundName]) {
             sounds[soundName].volume = soundEffectsVolume * 0.5;
             sounds[soundName].currentTime = 0;
-            sounds[soundName].play().catch(error => console.log(`Error playing sound ${soundName}:`, error));
+            sounds[soundName].play().catch(error => console.warn(`Error playing sound ${soundName} (muted click):`, error));
             return;
         }
         if (isMuted) return;
@@ -610,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 sound.volume = menuMusicVolume;
             }
-            sound.play().catch(error => console.log(`Error playing sound ${soundName}:`, error));
+            sound.play().catch(error => console.warn(`Error playing sound ${soundName}:`, error));
         } else {
             console.warn(`Sound not found: ${soundName}`);
         }
@@ -620,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMuted) return;
         sounds.menuMusic.volume = menuMusicVolume;
         if (sounds.menuMusic.paused) {
-            sounds.menuMusic.play().catch(error => console.log("Error playing menu music:", error));
+            sounds.menuMusic.play().catch(error => console.warn("Error playing menu music:", error));
         }
     }
 
@@ -636,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingOverlay.classList.add('hidden');
         }
 
-        if (synth && synth.speaking && screenElement !== quizContainer) {
+        if (synth && synth.speaking && screenElement !== quizContainer && screenElement !== gameOverContainer) {
             console.log('[DEBUG] TTS: Screen changed, cancelling speech.');
             synth.cancel();
         }
@@ -649,12 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
             screenElement.classList.remove('hidden');
         } else {
             console.error("[DEBUG] showScreen: screenElement is null or undefined!");
+            if(lobbyConnectContainer) lobbyConnectContainer.classList.remove('hidden');
             return;
         }
 
         if (screenElement === lobbyConnectContainer || screenElement === lobbyWaitingRoom || screenElement === gameOverContainer) {
             startMenuMusic();
-            // Hide host controls when not in quiz screen
             if (hostTogglePauseBtn) hostTogglePauseBtn.classList.add('hidden');
             if (hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden');
         } else {
@@ -662,36 +262,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (screenElement === quizContainer) {
-            if (isHost) { // Show host-specific controls
+            if (isHost) {
                 if (hostTogglePauseBtn) {
                     hostTogglePauseBtn.classList.remove('hidden');
-                    hostTogglePauseBtn.disabled = isGamePaused;
+                    hostTogglePauseBtn.disabled = false;
                     hostTogglePauseBtn.textContent = isGamePaused ? 'Spiel fortsetzen' : 'Pause Spiel';
                 }
                 if (hostSkipToEndBtn) {
                     hostSkipToEndBtn.classList.remove('hidden');
-                    hostSkipToEndBtn.disabled = false;
+                    hostSkipToEndBtn.disabled = isGamePaused;
                 }
-            } else { // Hide host-specific controls for non-hosts
+            } else {
                 if (hostTogglePauseBtn) hostTogglePauseBtn.classList.add('hidden');
                 if (hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden');
             }
-        } else { // If not quiz container, ensure host buttons are hidden
-            if (hostTogglePauseBtn) hostTogglePauseBtn.classList.add('hidden');
-            if (hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden');
         }
 
         if (gamePausedOverlay && screenElement !== quizContainer) {
             gamePausedOverlay.classList.add('hidden');
+            isGamePaused = false;
         }
     }
 
     function displayError(element, message, duration = 3000) {
         if(element) {
             element.textContent = message;
-            setTimeout(() => { element.textContent = ''; }, duration);
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.textContent = '';
+                element.classList.add('hidden');
+            }, duration);
         } else {
             console.warn("[DEBUG] displayError: element is null for message:", message);
+            showGlobalNotification(message, 'error');
         }
     }
 
@@ -711,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function populateCategorySelector(categories, selectedCategoryKey = null) {
-        console.log('[DEBUG] populateCategorySelector - START. Categories received:', JSON.stringify(categories), 'Selected:', selectedCategoryKey);
+        console.log('[DEBUG] populateCategorySelector - START. Categories:', JSON.stringify(categories), 'Selected:', selectedCategoryKey);
 
         if (!categorySelect) {
             console.error("[DEBUG] populateCategorySelector: categorySelect element not found!");
@@ -719,8 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         allAvailableCategoriesCache = Array.isArray(categories) ? [...categories] : [];
-        console.log('[DEBUG] populateCategorySelector - allAvailableCategoriesCache updated:', JSON.stringify(allAvailableCategoriesCache));
-
         categorySelect.innerHTML = '';
 
         if (allAvailableCategoriesCache.length === 0) {
@@ -729,10 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = "Keine Kategorien verfügbar";
             categorySelect.appendChild(option);
             categorySelect.disabled = true;
-            console.warn('[DEBUG] populateCategorySelector - No categories available for dropdown (allAvailableCategoriesCache is empty).');
             if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
+            if(startGameLobbyBtn) startGameLobbyBtn.disabled = true;
             return;
         }
+
+        categorySelect.disabled = !isHost;
 
         const defaultOption = document.createElement('option');
         defaultOption.value = "";
@@ -740,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultOption.disabled = true;
         defaultOption.selected = !selectedCategoryKey;
         categorySelect.appendChild(defaultOption);
-        console.log('[DEBUG] populateCategorySelector - Added default option.');
 
         allAvailableCategoriesCache.forEach(categoryKey => {
             const option = document.createElement('option');
@@ -751,227 +353,243 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             categorySelect.appendChild(option);
         });
-        console.log('[DEBUG] populateCategorySelector - Added all category options. Current HTML:', categorySelect.innerHTML);
 
         if (selectedCategoryKey && allAvailableCategoriesCache.includes(selectedCategoryKey)) {
             currentSelectedCategoryKey = selectedCategoryKey;
             categorySelect.value = selectedCategoryKey;
             if(currentCategoryText) currentCategoryText.textContent = selectedCategoryKey;
-            if(chosenCategoryDisplay) chosenCategoryDisplay.classList.remove('hidden');
+            if(chosenCategoryDisplay && !isHost) chosenCategoryDisplay.classList.remove('hidden');
+            else if (chosenCategoryDisplay && isHost) chosenCategoryDisplay.classList.add('hidden');
         } else {
             currentSelectedCategoryKey = null;
             categorySelect.value = "";
-            if(currentCategoryText) currentCategoryText.textContent = "";
+            if(currentCategoryText) currentCategoryText.textContent = "Keine Kategorie ausgewählt";
             if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
         }
-
-        console.log('[DEBUG] populateCategorySelector - END. currentSelectedCategoryKey:', currentSelectedCategoryKey, 'categorySelect.value:', categorySelect.value);
+        if(startGameLobbyBtn) startGameLobbyBtn.disabled = !isHost || !categorySelect.value;
     }
 
     function handleCategoryChange() {
-        console.log('[DEBUG] handleCategoryChange - START. Current categorySelect.value:', categorySelect.value, 'isHost:', isHost);
         if (isHost) {
             currentSelectedCategoryKey = categorySelect.value || null;
-            console.log('[DEBUG] handleCategoryChange - Host selected category:', currentSelectedCategoryKey);
-
             if (currentLobbyId) {
                 socket.emit('hostSelectedCategory', { lobbyId: currentLobbyId, categoryKey: currentSelectedCategoryKey });
-            } else {
-                console.warn("[DEBUG] handleCategoryChange: currentLobbyId is null, cannot emit selection.");
             }
-
             const playerCount = playerListLobby ? playerListLobby.children.length : 0;
             if(startGameLobbyBtn) startGameLobbyBtn.disabled = !currentSelectedCategoryKey || playerCount < 1;
-            console.log('[DEBUG] handleCategoryChange - Start Game Button Disabled:', startGameLobbyBtn ? startGameLobbyBtn.disabled : 'N/A');
-
-            if (currentSelectedCategoryKey) {
-                if(currentCategoryText) currentCategoryText.textContent = currentSelectedCategoryKey;
-                if(chosenCategoryDisplay) chosenCategoryDisplay.classList.remove('hidden');
-            } else {
-                if(currentCategoryText) currentCategoryText.textContent = "";
-                if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
-            }
-        } else {
-            console.log('[DEBUG] handleCategoryChange - Not host, no action taken for emission.');
+            if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
         }
     }
 
     function updatePlayerList(players, initialLobbyCategories = [], currentCatFromServer = null) {
-        console.log('[DEBUG] updatePlayerList - START. Players:', players.length, 'InitialLobbyCategories:', JSON.stringify(initialLobbyCategories), 'CurrentCatFromServer:', currentCatFromServer, 'CurrentPlayerId:', currentPlayerId);
-
-        if (!playerListLobby) {
-            console.error("[DEBUG] updatePlayerList: playerListLobby element not found!");
-            return;
-        }
-        playerListLobby.innerHTML = '';
+        if (!playerListLobby) return;
+        playerListLobby.innerHTML = ''; // Clear old list
 
         const me = players.find(p => p.id === currentPlayerId);
-        if (me) {
-            isHost = me.isHost;
-            console.log('[DEBUG] updatePlayerList - Updated local isHost to:', isHost);
-        } else {
-            console.warn('[DEBUG] updatePlayerList - Current player not found in player list. Assuming not host.');
-            isHost = false;
-        }
+        if (me) isHost = me.isHost;
+        else isHost = false;
 
         players.forEach(player => {
             const playerDiv = document.createElement('div');
-            // Using Tailwind classes for styling player entries for consistency
-            playerDiv.className = 'player-entry bg-slate-600/50 p-3 rounded-md shadow flex justify-between items-center text-slate-200';
+            playerDiv.className = 'player-entry bg-slate-700/80 p-3 rounded-lg shadow-md flex justify-between items-center text-slate-100 my-1';
+            if (player.disconnected) playerDiv.classList.add('opacity-50', 'italic');
+            if (player.isHost) playerDiv.classList.add('ring-2', 'ring-sky-400');
 
-            // Add a subtle indicator for disconnected players
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'player-name font-medium';
+            let nameDisplayText = player.name;
+            if (player.id === currentPlayerId) nameDisplayText += ' (Du)';
+            nameSpan.textContent = nameDisplayText;
+            playerDiv.appendChild(nameSpan);
+
             if (player.disconnected) {
-                playerDiv.classList.add('opacity-60');
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'text-xs text-red-400 ml-2';
+                statusSpan.textContent = '(Getrennt)';
+                nameSpan.appendChild(statusSpan); // Append to nameSpan to keep it together
             }
 
-            let nameDisplay = player.name;
-            if (player.id === currentPlayerId) {
-                nameDisplay += ' (Du)';
-                if (player.isHost) {
-                    playerDiv.classList.add('ring-2', 'ring-sky-500'); // Highlight current player if host
-                }
+            if (player.isHost) {
+                const hostBadgeSpan = document.createElement('span');
+                hostBadgeSpan.className = 'player-host-badge bg-sky-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full ml-2';
+                hostBadgeSpan.textContent = 'Host';
+                // Append to playerDiv to have it on the right, or to nameSpan if preferred next to name
+                playerDiv.appendChild(hostBadgeSpan);
             }
-
-            let statusIndicator = '';
-            if (player.disconnected) {
-                statusIndicator = '<span class="text-xs text-red-300 ml-2">(Verbindung getrennt)</span>';
-            }
-
-            playerDiv.innerHTML = `
-                <span class="player-name font-medium">${nameDisplay}${statusIndicator}</span>
-                ${player.isHost ? '<span class="player-host-badge bg-sky-500 text-white text-xs font-semibold px-2 py-1 rounded-full">Host</span>' : ''}
-            `;
-
             playerListLobby.appendChild(playerDiv);
         });
-        console.log('[DEBUG] updatePlayerList - Player list populated.');
 
         const categoriesForDropdown = (Array.isArray(initialLobbyCategories) && initialLobbyCategories.length > 0)
-            ? initialLobbyCategories
-            : allAvailableCategoriesCache;
-
-        console.log('[DEBUG] updatePlayerList - categoriesForDropdown determined as:', JSON.stringify(categoriesForDropdown));
+            ? initialLobbyCategories : allAvailableCategoriesCache;
 
         if (categorySelectionContainer) {
-            if (categoriesForDropdown && categoriesForDropdown.length > 0) {
+            if (categoriesForDropdown.length > 0) {
                 categorySelectionContainer.classList.remove('hidden');
-                console.log('[DEBUG] updatePlayerList - Category selection container UNHIDDEN.');
                 populateCategorySelector(categoriesForDropdown, currentCatFromServer || currentSelectedCategoryKey);
             } else {
                 categorySelectionContainer.classList.add('hidden');
-                console.log('[DEBUG] updatePlayerList - No categories to display, category selection container HIDDEN.');
+                if(startGameLobbyBtn) startGameLobbyBtn.disabled = true;
             }
-        } else {
-            console.error("[DEBUG] updatePlayerList: categorySelectionContainer element not found!");
-        }
-
-        if (categorySelect) {
-            categorySelect.disabled = !isHost;
-            console.log('[DEBUG] updatePlayerList - Category select disabled state set to:', categorySelect.disabled);
-        } else {
-            console.error("[DEBUG] updatePlayerList: categorySelect element not found for disabling!");
         }
 
         if (isHost) {
             if(lobbyMessage) lobbyMessage.textContent = "Du bist der Host. Wähle eine Kategorie und starte das Spiel.";
             if(startGameLobbyBtn) {
                 startGameLobbyBtn.classList.remove('hidden');
-                const playerCount = playerListLobby.children.length;
-                startGameLobbyBtn.disabled = !categorySelect.value || playerCount < 1; // Ensure a category is selected
-                console.log('[DEBUG] updatePlayerList - Host UI updated. Start button unhidden. Disabled:', startGameLobbyBtn.disabled);
+                startGameLobbyBtn.disabled = !categorySelect.value || players.length < 1;
             }
+            if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
+            if(categorySelect) categorySelect.disabled = false;
         } else {
-            if(lobbyMessage) lobbyMessage.textContent = "Warte, bis der Host das Spiel startet oder eine Kategorie wählt...";
+            if(lobbyMessage) lobbyMessage.textContent = "Warte, bis der Host das Spiel startet...";
             if(startGameLobbyBtn) startGameLobbyBtn.classList.add('hidden');
+            if(categorySelect) categorySelect.disabled = true;
 
             if (currentCatFromServer) {
                 if(currentCategoryText) currentCategoryText.textContent = currentCatFromServer;
                 if(chosenCategoryDisplay) chosenCategoryDisplay.classList.remove('hidden');
             } else {
+                if(currentCategoryText) currentCategoryText.textContent = "Kategorie wird gewählt...";
                 if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
             }
-            console.log('[DEBUG] updatePlayerList - Non-Host UI updated.');
         }
-
-        // Update host-specific buttons based on current screen and host status
-        const currentScreen = [lobbyConnectContainer, lobbyWaitingRoom, quizContainer, gameOverContainer].find(
-            s => s && !s.classList.contains('hidden')
-        );
-        if (currentScreen === quizContainer) {
-            if (isHost) {
-                if (hostTogglePauseBtn) hostTogglePauseBtn.classList.remove('hidden');
-                if (hostSkipToEndBtn) hostSkipToEndBtn.classList.remove('hidden');
-            } else {
-                if (hostTogglePauseBtn) hostTogglePauseBtn.classList.add('hidden');
-                if (hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden');
-            }
-        }
-
-        console.log('[DEBUG] updatePlayerList - END.');
     }
 
     function updateLiveScores(scoresData) {
         if (!liveScoresList) return;
-        liveScoresList.innerHTML = '';
+        liveScoresList.innerHTML = ''; // Clear old scores
         const sortedScores = [...scoresData].sort((a, b) => b.score - a.score);
+
         sortedScores.forEach(player => {
             const scoreDiv = document.createElement('div');
-            scoreDiv.className = 'player-entry-quiz'; // Base class
-            if (player.id === currentPlayerId) {
-                scoreDiv.classList.add('current-player-highlight'); // Highlight for current player
-            }
+            scoreDiv.className = 'player-entry-quiz flex justify-between items-center p-2 bg-slate-700/70 rounded-md mb-1';
+            if (player.id === currentPlayerId) scoreDiv.classList.add('ring-1', 'ring-amber-400');
+            if (player.disconnected) scoreDiv.classList.add('opacity-60');
 
-            // Add a subtle indicator for disconnected players
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'player-name-quiz text-slate-200';
+            let displayNameText = player.name;
+            if (player.id === currentPlayerId) displayNameText += " (Du)";
+            nameSpan.textContent = displayNameText;
+
             if (player.disconnected) {
-                scoreDiv.classList.add('opacity-60');
+                const statusIndicatorSpan = document.createElement('span');
+                statusIndicatorSpan.className = 'text-xs text-red-400 ml-1';
+                statusIndicatorSpan.textContent = '(Getrennt)';
+                nameSpan.appendChild(statusIndicatorSpan);
             }
+            scoreDiv.appendChild(nameSpan);
 
-            let displayName = player.name;
-            if (player.id === currentPlayerId) displayName += " (Du)";
+            const scoreDetailsDiv = document.createElement('div');
+            scoreDetailsDiv.className = 'text-right';
 
-            // Add disconnected status if applicable
-            let statusIndicator = '';
-            if (player.disconnected) {
-                statusIndicator = '<span class="text-xs text-red-300 ml-1">(Getrennt)</span>';
-            }
+            const playerScoreSpan = document.createElement('span');
+            playerScoreSpan.className = 'player-score-quiz text-amber-400 font-semibold';
+            playerScoreSpan.textContent = `${player.score} Pkt`;
+            scoreDetailsDiv.appendChild(playerScoreSpan);
 
-            scoreDiv.innerHTML = `
-                <span class="player-name-quiz">${displayName}${statusIndicator}</span>
-                <div>
-                    <span class="player-score-quiz">${player.score} Pkt</span>
-                    <span class="player-streak-quiz">(Streak: ${player.streak || 0})</span>
-                </div>`;
+            const playerStreakSpan = document.createElement('span');
+            playerStreakSpan.className = 'player-streak-quiz text-xs text-sky-300 ml-2';
+            playerStreakSpan.textContent = `(Streak: ${player.streak || 0})`;
+            scoreDetailsDiv.appendChild(playerStreakSpan);
+
+            scoreDiv.appendChild(scoreDetailsDiv);
             liveScoresList.appendChild(scoreDiv);
         });
+    }
+
+    function renderOptions(data) {
+        if(optionsContainer) {
+            optionsContainer.innerHTML = ''; // Clear previous options
+            const optionIndices = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)'];
+            data.options.forEach((optionText, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn w-full text-left p-3 my-1.5 rounded-lg transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800';
+                button.disabled = isGamePaused;
+
+                const indexSpan = document.createElement('span');
+                indexSpan.className = 'option-index font-semibold mr-2 px-2 py-1 bg-slate-600 rounded';
+                indexSpan.textContent = optionIndices[index % optionIndices.length];
+                button.appendChild(indexSpan);
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'option-text';
+                textSpan.textContent = optionText;
+                button.appendChild(textSpan);
+
+                button.classList.add('bg-slate-700', 'border', 'border-slate-600', 'hover:bg-sky-700', 'hover:border-sky-500', 'text-slate-100');
+                button.classList.remove('selected', 'correct', 'incorrect-picked', 'reveal-correct', 'flash-correct', 'ring-sky-300');
+
+                button.addEventListener('click', () => {
+                    playSound('click');
+                    optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
+                        btn.disabled = true;
+                        btn.classList.remove('selected', 'ring-4', 'ring-white', 'bg-sky-500', 'border-sky-400');
+                        if (!btn.classList.contains('correct') && !btn.classList.contains('incorrect-picked') && !btn.classList.contains('reveal-correct')) {
+                            btn.classList.add('bg-slate-700', 'border-slate-600');
+                        }
+                    });
+                    button.classList.add('selected', 'bg-sky-600', 'border-sky-500', 'ring-4', 'ring-white');
+                    button.classList.remove('bg-slate-700', 'border-slate-600', 'hover:bg-sky-700', 'hover:border-sky-500');
+
+                    socket.emit('submitAnswer', {
+                        lobbyId: currentLobbyId,
+                        questionIndex: currentQuestionIndex,
+                        answer: optionText
+                    });
+                    if(feedbackText) feedbackText.textContent = '';
+                    if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Antwort übermittelt. Warte auf andere Spieler oder Timer...";
+                });
+                optionsContainer.appendChild(button);
+            });
+        }
+        if(feedbackText) feedbackText.textContent = '';
+        if(waitingForOthersMsg) waitingForOthersMsg.textContent = '';
+        if(timerDisplay) {
+            timerDisplay.textContent = isGamePaused ? 'Pausiert' : `${questionTimeLimit}s`;
+            timerDisplay.classList.remove('text-red-500', 'text-amber-400');
+            if (!isGamePaused) timerDisplay.classList.add('text-amber-400');
+        }
     }
 
     // --- Event Listeners for UI ---
     if(createLobbyBtn) createLobbyBtn.addEventListener('click', () => {
         playSound('click');
-        const playerName = playerNameInput.value.trim() || 'AnonSpieler';
+        const playerName = playerNameInput.value.trim() || `AnonSpieler${Math.floor(Math.random()*1000)}`;
+        if (!playerName) {
+            displayError(connectErrorMsg, 'Bitte gib einen Spielernamen ein.');
+            return;
+        }
         socket.emit('createLobby', playerName);
         createLobbyBtn.disabled = true;
         if(joinLobbyBtn) joinLobbyBtn.disabled = true;
+        if(connectErrorMsg) connectErrorMsg.textContent = '';
     });
 
     if(joinLobbyBtn) joinLobbyBtn.addEventListener('click', () => {
         playSound('click');
         const lobbyId = lobbyIdInput.value.trim().toUpperCase();
-        const playerName = playerNameInput.value.trim() || 'AnonSpieler';
-        if (lobbyId) {
-            socket.emit('joinLobby', { lobbyId, playerName });
-            if(createLobbyBtn) createLobbyBtn.disabled = true;
-            joinLobbyBtn.disabled = true;
-        } else {
-            displayError(connectErrorMsg, 'Bitte gib eine Lobby ID ein.');
+        const playerName = playerNameInput.value.trim() || `AnonSpieler${Math.floor(Math.random()*1000)}`;
+
+        if (!playerName) {
+            displayError(connectErrorMsg, 'Bitte gib einen Spielernamen ein.');
+            return;
         }
+        if (!lobbyId) {
+            displayError(connectErrorMsg, 'Bitte gib eine Lobby ID ein.');
+            return;
+        }
+        socket.emit('joinLobby', { lobbyId, playerName });
+        if(createLobbyBtn) createLobbyBtn.disabled = true;
+        joinLobbyBtn.disabled = true;
+        if(connectErrorMsg) connectErrorMsg.textContent = '';
     });
 
     if(copyLobbyIdBtn) copyLobbyIdBtn.addEventListener('click', () => {
         playSound('click');
-        if (currentLobbyId) {
-            navigator.clipboard.writeText(currentLobbyId)
-                .then(() => showGlobalNotification(`Lobby ID ${currentLobbyId} kopiert!`, 'success', 2000))
+        if (currentLobbyId && displayLobbyId && displayLobbyId.textContent) {
+            navigator.clipboard.writeText(displayLobbyId.textContent)
+                .then(() => showGlobalNotification(`Lobby ID ${displayLobbyId.textContent} kopiert!`, 'success', 2000))
                 .catch(err => showGlobalNotification('Kopieren der ID fehlgeschlagen.', 'error', 2000));
         }
     });
@@ -986,21 +604,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayError(startGameErrorMsg, "Bitte wähle eine Fragenkategorie aus.");
                 return;
             }
-            // Use currentSelectedCategoryKey which is updated by handleCategoryChange
             socket.emit('startGame', { lobbyId: currentLobbyId, categoryKey: currentSelectedCategoryKey });
             startGameLobbyBtn.disabled = true;
+            if(startGameErrorMsg) startGameErrorMsg.textContent = '';
         }
     });
 
     if(leaveLobbyBtn) leaveLobbyBtn.addEventListener('click', () => {
         playSound('click');
+        if (socket.connected) socket.disconnect();
         stopMenuMusic();
         if (synth && synth.speaking) synth.cancel();
-        // Clear client state but don't reload
         showScreen(lobbyConnectContainer);
         currentLobbyId = null;
         currentPlayerId = null;
         isHost = false;
+        isGamePaused = false;
+        if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
+        if(createLobbyBtn) createLobbyBtn.disabled = false;
+        if(joinLobbyBtn) joinLobbyBtn.disabled = false;
+        if(lobbyIdInput) lobbyIdInput.value = '';
+        if (!socket.connected) socket.connect();
     });
 
     if(playAgainHostBtn) playAgainHostBtn.addEventListener('click', () => {
@@ -1020,10 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function triggerHostPause() {
         if (currentLobbyId && isHost && quizContainer && !quizContainer.classList.contains('hidden')) {
-            console.log('[DEBUG] Triggering hostTogglePause. isGamePaused (client-side before emit):', isGamePaused);
             socket.emit('hostTogglePause', { lobbyId: currentLobbyId });
-        } else {
-            console.log('[DEBUG] Conditions not met for triggering host pause.');
         }
     }
 
@@ -1038,10 +659,9 @@ document.addEventListener('DOMContentLoaded', () => {
         hostSkipToEndBtn.addEventListener('click', () => {
             playSound('click');
             if (isHost && currentLobbyId && quizContainer && !quizContainer.classList.contains('hidden') && !isGamePaused) {
-                if (confirm("Möchtest du das Spiel wirklich für alle beenden?")) {
-                    console.log(`[DEBUG] Host skipping to end for lobby ${currentLobbyId}`);
+                if (confirm("Möchtest du das Spiel wirklich für alle beenden? Dies zeigt sofort den Ergebnisbildschirm.")) {
                     socket.emit('hostSkipToEnd', { lobbyId: currentLobbyId });
-                    hostSkipToEndBtn.disabled = true; // Disable button after click
+                    hostSkipToEndBtn.disabled = true;
                 }
             }
         });
@@ -1052,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
             isHost &&
             quizContainer && !quizContainer.classList.contains('hidden') &&
             !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-
             event.preventDefault();
             playSound('click');
             triggerHostPause();
@@ -1062,32 +681,479 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Socket.IO Event Handlers ---
     socket.on('connect', () => {
         console.log('[DEBUG] Connected to server with ID:', socket.id);
-
-        // Show loading overlay and check for existing session
         if(loadingOverlay) loadingOverlay.classList.remove('hidden');
-
-        // Check if there's an existing session
         socket.emit('checkExistingSession');
-
-        // Clear connection retry counter
         connectionRetryCount = 0;
+        if(createLobbyBtn) createLobbyBtn.disabled = false;
+        if(joinLobbyBtn) joinLobbyBtn.disabled = false;
     });
 
     socket.on('disconnect', (reason) => {
-        console.log('[DEBUG] Vom Server getrennt:', reason);
-        showGlobalNotification('Vom Server getrennt. Versuche erneut zu verbinden...', 'error', 5000);
+        console.warn('[DEBUG] Vom Server getrennt:', reason);
+        if (reason === 'io server disconnect') {
+            showGlobalNotification('Vom Server getrennt.', 'error', 5000);
+        } else {
+            showGlobalNotification('Verbindung verloren. Versuche erneut...', 'error', 5000);
+        }
         stopMenuMusic();
         if (synth && synth.speaking) synth.cancel();
         if (isGamePaused && gamePausedOverlay) {
             gamePausedOverlay.classList.add('hidden');
             isGamePaused = false;
         }
+        if(createLobbyBtn) createLobbyBtn.disabled = true;
+        if(joinLobbyBtn) joinLobbyBtn.disabled = true;
+        if(startGameLobbyBtn) startGameLobbyBtn.disabled = true;
+    });
 
-        // Handle automatic reconnection attempts
-        if (connectionRetryCount < MAX_CONNECTION_RETRIES) {
-            connectionRetryCount++;
-            console.log(`[DEBUG] Attempting to reconnect (${connectionRetryCount}/${MAX_CONNECTION_RETRIES})...`);
-        } else {
-            console.log('[DEBUG] Maximum reconnection attempts reached');
-            showGlobalNotification('Verbindung zum Server konnte nicht wiederhergestellt werden. Bitte lade die Seite neu.', 'error', 10000);
+    socket.on('connect_error', (err) => {
+        console.error('[DEBUG] Connection attempt failed:', err.message);
+        connectionRetryCount++;
+        if (connectionRetryCount >= MAX_CONNECTION_RETRIES) {
+            showGlobalNotification('Verbindung zum Server fehlgeschlagen. Bitte Seite neu laden.', 'error', 10000);
         }
+    });
+
+    socket.on('lobbyCreated', (data) => {
+        currentLobbyId = data.lobbyId;
+        currentPlayerId = data.playerId;
+        isHost = true;
+        if(displayLobbyId) displayLobbyId.textContent = currentLobbyId;
+        updatePlayerList(data.players, data.availableCategories);
+        showScreen(lobbyWaitingRoom);
+        if(connectErrorMsg) connectErrorMsg.textContent = '';
+        playSound('playerJoined');
+    });
+
+    socket.on('joinedLobby', (data) => {
+        currentLobbyId = data.lobbyId;
+        currentPlayerId = data.playerId;
+        isHost = data.isHost;
+        if(displayLobbyId) displayLobbyId.textContent = currentLobbyId;
+        updatePlayerList(data.players, data.availableCategories, data.selectedCategory);
+        showScreen(lobbyWaitingRoom);
+        if(connectErrorMsg) connectErrorMsg.textContent = '';
+        playSound('playerJoined');
+    });
+
+    socket.on('playerUpdated', (data) => {
+        if (data.lobbyId === currentLobbyId) {
+            updatePlayerList(data.players, data.availableCategories, data.selectedCategory);
+            if (data.message) showGlobalNotification(data.message, 'info', 2500);
+            if (data.playSound) playSound(data.playSound);
+        }
+    });
+
+    socket.on('lobbyNotFound', (data) => {
+        displayError(connectErrorMsg, `Lobby ${data.lobbyId} nicht gefunden oder ist voll.`);
+        if(createLobbyBtn) createLobbyBtn.disabled = false;
+        if(joinLobbyBtn) joinLobbyBtn.disabled = false;
+    });
+
+    socket.on('lobbyError', (data) => {
+        displayError(connectErrorMsg, data.message);
+        if(createLobbyBtn) createLobbyBtn.disabled = false;
+        if(joinLobbyBtn) joinLobbyBtn.disabled = false;
+    });
+
+    socket.on('hostChangedCategory', (data) => {
+        if (!isHost) {
+            currentSelectedCategoryKey = data.categoryKey;
+            populateCategorySelector(allAvailableCategoriesCache, data.categoryKey);
+            if(currentCategoryText) currentCategoryText.textContent = data.categoryKey || "Kategorie wird gewählt...";
+            if(chosenCategoryDisplay && data.categoryKey) chosenCategoryDisplay.classList.remove('hidden');
+            else if(chosenCategoryDisplay) chosenCategoryDisplay.classList.add('hidden');
+        }
+    });
+
+    socket.on('gameStarting', (data) => {
+        playSound('gameStart');
+    });
+
+    socket.on('newQuestion', (data) => {
+        currentQuestionDataCache = data;
+        currentQuestionIndex = data.questionIndex;
+        questionTimeLimit = data.timeLimit;
+        wasTimedOut = false;
+
+        if (synth && synth.speaking) synth.cancel();
+        showScreen(quizContainer);
+
+        if(playerInfoQuiz) {
+            const playersDataString = quizContainer.dataset.players;
+            let me = null;
+            if (playersDataString) {
+                try {
+                    const playersData = JSON.parse(playersDataString);
+                    me = playersData.find(p => p.id === currentPlayerId);
+                } catch (e) { console.error("Error parsing playersData:", e); }
+            }
+            if (me) playerInfoQuiz.textContent = `${me.name} (Punkte: ${me.score})`;
+            else if (playerNameInput && playerNameInput.value) playerInfoQuiz.textContent = `${playerNameInput.value.trim()} (Punkte: 0)`;
+            else playerInfoQuiz.textContent = `Spieler (Punkte: 0)`;
+        }
+
+        if(questionCounter) questionCounter.textContent = `Frage ${data.questionIndex + 1} von ${data.totalQuestions}`;
+        if(gameCategoryDisplay) gameCategoryDisplay.textContent = `Kategorie: ${data.category}`;
+        if(questionText) questionText.textContent = data.question;
+
+        renderOptions(data);
+
+        let questionToSpeak = `Frage ${data.questionIndex + 1}: ${data.question}. Optionen sind: `;
+        data.options.forEach((option, index) => {
+            questionToSpeak += `${String.fromCharCode(97 + index)}) ${option}. `;
+        });
+        speak(questionToSpeak, 'de-DE', null, true);
+    });
+
+    socket.on('updateScores', (playersScoreData) => {
+        if(quizContainer) quizContainer.dataset.players = JSON.stringify(playersScoreData);
+        updateLiveScores(playersScoreData);
+        const me = playersScoreData.find(p => p.id === currentPlayerId);
+        if (me && playerInfoQuiz) {
+            playerInfoQuiz.textContent = `${me.name} (Punkte: ${me.score})`;
+        }
+    });
+
+    socket.on('timerUpdate', (timeLeft) => {
+        if (isGamePaused) {
+            if(timerDisplay) timerDisplay.textContent = isHost ? `Pausiert (${Math.ceil(timeLeft)}s)` : `Pausiert`;
+            return;
+        }
+        if(!timerDisplay) return;
+
+        timerDisplay.textContent = `${timeLeft}s`;
+        if (timeLeft <= 5 && timeLeft > 0) {
+            timerDisplay.classList.remove('text-amber-400');
+            timerDisplay.classList.add('text-red-500', 'animate-pulse');
+        } else if (timeLeft === 0) {
+            wasTimedOut = true;
+            timerDisplay.classList.add('text-red-500');
+            timerDisplay.classList.remove('animate-pulse');
+            if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Zeit abgelaufen! Antwort wird aufgedeckt...";
+            if(optionsContainer) optionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+        } else {
+            timerDisplay.classList.remove('text-red-500', 'animate-pulse');
+            timerDisplay.classList.add('text-amber-400');
+        }
+    });
+
+    socket.on('answerResult', (data) => {
+        if (data.isCorrect) {
+            playSound('correctAnswer');
+            if (data.streak && data.streak > 1) playSound('streak');
+        } else {
+            playSound('incorrectAnswer');
+        }
+
+        const playersDataString = quizContainer.dataset.players;
+        if (playersDataString) {
+            try {
+                const players = JSON.parse(playersDataString);
+                const playerIndex = players.findIndex(p => p.id === currentPlayerId);
+                if (playerIndex !== -1) {
+                    players[playerIndex].score = data.score;
+                    players[playerIndex].streak = data.streak;
+                    quizContainer.dataset.players = JSON.stringify(players);
+                    if (playerInfoQuiz) playerInfoQuiz.textContent = `${players[playerIndex].name} (Punkte: ${players[playerIndex].score})`;
+                }
+            } catch (e) { console.error("Error updating score in answerResult:", e); }
+        }
+
+        if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Warte auf Ergebnisse aller Spieler...";
+        if(feedbackText) {
+            if (data.isCorrect) {
+                feedbackText.textContent = `Richtig! ${data.streak > 1 ? `Streak: ${data.streak}` : ''}`;
+                feedbackText.className = 'text-lg font-medium text-green-400 mt-2';
+            } else {
+                feedbackText.textContent = 'Leider falsch!';
+                feedbackText.className = 'text-lg font-medium text-red-400 mt-2';
+            }
+        }
+
+        if (optionsContainer) {
+            optionsContainer.querySelectorAll('.option-btn.selected').forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'border-sky-500', 'ring-4', 'ring-white');
+                if (data.isCorrect) btn.classList.add('correct', 'bg-green-500', 'border-green-400', 'text-white');
+                else btn.classList.add('incorrect-picked', 'bg-red-500', 'border-red-400', 'text-white');
+            });
+        }
+    });
+
+    socket.on('questionOver', (data) => {
+        if (wasTimedOut && !isGamePaused) playSound('timesUp');
+        wasTimedOut = false;
+
+        if(feedbackText && !feedbackText.textContent) {
+            feedbackText.textContent = data.isCorrect ? 'Richtig!' : (data.playerAnswer ? 'Leider falsch.' : 'Keine Antwort gegeben.');
+            feedbackText.className = data.isCorrect ? 'text-lg font-medium text-green-400 mt-2' : 'text-lg font-medium text-red-400 mt-2';
+        }
+        if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Richtige Antwort wird aufgedeckt...";
+
+        if(optionsContainer) {
+            optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('selected', 'ring-4', 'ring-white', 'bg-sky-600', 'border-sky-500');
+
+                const btnTextSpan = btn.querySelector('.option-text');
+                const btnText = btnTextSpan ? btnTextSpan.textContent.trim() : '';
+                const correctAnswerText = data.correctAnswer.trim();
+
+                if (btnText === correctAnswerText) {
+                    btn.classList.remove('incorrect-picked', 'bg-red-500', 'border-red-400');
+                    btn.classList.add('reveal-correct', 'bg-emerald-500', 'border-emerald-400', 'text-white', 'flash-correct');
+                    setTimeout(() => {
+                        btn.classList.remove('flash-correct');
+                        if (!btn.classList.contains('correct')) {
+                            btn.classList.add('bg-emerald-500', 'border-emerald-400', 'text-white');
+                        }
+                    }, 2000);
+                } else if (!btn.classList.contains('incorrect-picked') && !btn.classList.contains('correct')) {
+                    btn.classList.add('bg-slate-700', 'border-slate-600', 'opacity-60');
+                }
+            });
+        }
+        updateLiveScores(data.scores);
+
+        const textToSpeak = `Die richtige Antwort war: ${data.correctAnswer}`;
+        speak(textToSpeak, 'de-DE', () => {
+            if(waitingForOthersMsg) waitingForOthersMsg.textContent = "Nächste Frage kommt...";
+        }, false);
+    });
+
+    socket.on('gameOver', (data) => {
+        stopMenuMusic();
+        if (synth && synth.speaking) synth.cancel();
+        isGamePaused = false;
+        if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
+        if(hostSkipToEndBtn) hostSkipToEndBtn.classList.add('hidden');
+
+        if(finalScoresDiv) {
+            finalScoresDiv.innerHTML = ''; // Clear previous scores
+            data.finalScores.forEach((player, index) => {
+                const scoreEntry = document.createElement('div');
+                scoreEntry.className = 'final-score-entry flex justify-between items-center p-3 my-1.5 rounded-lg text-slate-100';
+
+                let medalText = '';
+                let medalClass = '';
+                if (index === 0) { medalText = '🥇 '; medalClass = 'bg-amber-500/80'; }
+                else if (index === 1) { medalText = '🥈 '; medalClass = 'bg-slate-500/80'; }
+                else if (index === 2) { medalText = '🥉 '; medalClass = 'bg-orange-700/80'; }
+                else { medalClass = 'bg-slate-600/70'; }
+
+                scoreEntry.classList.add(medalClass);
+                if (player.id === currentPlayerId) scoreEntry.classList.add('ring-2', 'ring-white');
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'font-medium';
+                let displayNameText = player.name;
+                if (player.originalId === currentPlayerId || player.id === currentPlayerId) {
+                    displayNameText += " (Du)";
+                }
+                nameSpan.textContent = medalText + displayNameText;
+
+                if (player.disconnected) {
+                    const statusSpan = document.createElement('span');
+                    statusSpan.className = 'text-xs text-red-300 ml-2';
+                    statusSpan.textContent = '(Getrennt)';
+                    nameSpan.appendChild(statusSpan);
+                }
+                scoreEntry.appendChild(nameSpan);
+
+                const pointsSpan = document.createElement('span');
+                pointsSpan.className = 'font-semibold';
+                pointsSpan.textContent = `${player.score} Pkt`;
+                scoreEntry.appendChild(pointsSpan);
+
+                finalScoresDiv.appendChild(scoreEntry);
+            });
+        }
+
+        if (submitScoreHallOfFameBtn) {
+            submitScoreHallOfFameBtn.classList.remove('hidden');
+            submitScoreHallOfFameBtn.disabled = false;
+        }
+        if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = '';
+
+        if (isHost) {
+            if(playAgainHostBtn) playAgainHostBtn.classList.remove('hidden');
+            if(playAgainHostBtn) playAgainHostBtn.disabled = false;
+            if(waitingForHostPlayAgainBtn) waitingForHostPlayAgainBtn.classList.add('hidden');
+        } else {
+            if(playAgainHostBtn) playAgainHostBtn.classList.add('hidden');
+            if(waitingForHostPlayAgainBtn) waitingForHostPlayAgainBtn.classList.remove('hidden');
+        }
+        showScreen(gameOverContainer);
+        startMenuMusic();
+    });
+
+    socket.on('lobbyResetForPlayAgain', (data) => {
+        if (synth && synth.speaking) synth.cancel();
+        currentLobbyId = data.lobbyId;
+        allAvailableCategoriesCache = Array.isArray(data.availableCategories) ? [...data.availableCategories] : [];
+        updatePlayerList(data.players, allAvailableCategoriesCache, data.selectedCategory);
+        showScreen(lobbyWaitingRoom);
+        isGamePaused = false;
+        if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
+        if(hostTogglePauseBtn) hostTogglePauseBtn.textContent = 'Pause Spiel';
+
+        if(lobbyMessage) lobbyMessage.textContent = isHost ? "Spiel zurückgesetzt. Wähle Kategorie und starte!" : "Host hat das Spiel zurückgesetzt. Warte auf Start...";
+        if(startGameLobbyBtn && isHost) startGameLobbyBtn.disabled = !categorySelect.value || data.players.length < 1;
+        if(playAgainHostBtn) playAgainHostBtn.disabled = false;
+
+        if (submitScoreHallOfFameBtn) submitScoreHallOfFameBtn.classList.add('hidden');
+        if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = '';
+        startMenuMusic();
+    });
+
+    socket.on('gamePaused', (data) => {
+        isGamePaused = true;
+        if (synth && synth.speaking) synth.cancel();
+        if(gamePausedOverlay) gamePausedOverlay.classList.remove('hidden');
+        if(pauseResumeMessage) {
+            pauseResumeMessage.textContent = isHost ?
+                "Spiel pausiert. (Leertaste zum Fortsetzen)" :
+                "Das Spiel ist pausiert. Warte auf den Host.";
+        }
+        if(hostTogglePauseBtn && isHost) {
+            hostTogglePauseBtn.textContent = 'Spiel fortsetzen';
+            hostTogglePauseBtn.disabled = false;
+        }
+        if(hostSkipToEndBtn && isHost) hostSkipToEndBtn.disabled = true;
+
+        if(optionsContainer) optionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+        if(timerDisplay && data.remainingTime !== undefined) {
+            timerDisplay.textContent = isHost ? `Pausiert (${Math.ceil(data.remainingTime)}s)` : `Pausiert`;
+        } else if(timerDisplay) {
+            timerDisplay.textContent = 'Pausiert';
+        }
+    });
+
+    socket.on('gameResumed', () => {
+        isGamePaused = false;
+        if(gamePausedOverlay) gamePausedOverlay.classList.add('hidden');
+
+        if(hostTogglePauseBtn && isHost) {
+            hostTogglePauseBtn.textContent = 'Pause Spiel';
+            hostTogglePauseBtn.disabled = false;
+        }
+        if(hostSkipToEndBtn && isHost) hostSkipToEndBtn.disabled = false;
+
+        if(optionsContainer) {
+            optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
+                const isAnsweredOrRevealed = btn.classList.contains('selected') ||
+                    btn.classList.contains('correct') ||
+                    btn.classList.contains('incorrect-picked') ||
+                    btn.classList.contains('reveal-correct');
+                if (!isAnsweredOrRevealed) {
+                    btn.disabled = false;
+                }
+            });
+        }
+    });
+
+    socket.on('gameSkippedToEnd', () => {
+        if (synth && synth.speaking) synth.cancel();
+        showGlobalNotification('Der Host hat das Spiel beendet und zum Ergebnis übersprungen.', 'info', 4000);
+    });
+
+    socket.on('sessionRestored', (data) => {
+        currentPlayerId = data.playerId;
+        currentLobbyId = data.lobbyId;
+        isHost = data.isHost;
+
+        if (data.gameState === 'lobby') {
+            if(displayLobbyId) displayLobbyId.textContent = currentLobbyId;
+            updatePlayerList(data.players, data.availableCategories, data.selectedCategory);
+            showScreen(lobbyWaitingRoom);
+        } else if (data.gameState === 'quiz') {
+            showScreen(quizContainer);
+            if (data.currentQuestion) socket.emit('newQuestion', data.currentQuestion); // Simulate event
+            if (data.isPaused) socket.emit('gamePaused', { remainingTime: data.remainingTime }); // Simulate event
+        } else if (data.gameState === 'gameOver') {
+            socket.emit('gameOver', { finalScores: data.finalScores }); // Simulate event
+        } else {
+            showScreen(lobbyConnectContainer);
+        }
+        showGlobalNotification('Sitzung wiederhergestellt!', 'success');
+    });
+
+    socket.on('noSessionFound', () => {
+        showScreen(lobbyConnectContainer);
+        if(loadingOverlay) loadingOverlay.classList.add('hidden');
+    });
+
+    // --- Initial setup ---
+    showScreen(lobbyConnectContainer);
+    updateMuteButtonAppearance();
+
+    const savedPlayerName = localStorage.getItem('quizPlayerName');
+    if (savedPlayerName && playerNameInput) {
+        playerNameInput.value = savedPlayerName;
+    }
+    if(playerNameInput) playerNameInput.addEventListener('input', () => {
+        if (playerNameInput.value) localStorage.setItem('quizPlayerName', playerNameInput.value);
+        else localStorage.removeItem('quizPlayerName');
+    });
+    if(lobbyIdInput) lobbyIdInput.addEventListener('input', () => {
+        lobbyIdInput.value = lobbyIdInput.value.toUpperCase();
+    });
+
+    // --- Hall of Fame Score Submission ---
+    if (submitScoreHallOfFameBtn) {
+        submitScoreHallOfFameBtn.addEventListener('click', () => {
+            playSound('click');
+            const myPlayerName = playerNameInput.value.trim() || "Anonymous Quizzer";
+            let myFinalScore = 0;
+
+            const finalScoresEntries = finalScoresDiv ? finalScoresDiv.querySelectorAll('.final-score-entry') : [];
+            finalScoresEntries.forEach(entry => {
+                const nameElement = entry.querySelector('span:first-child');
+                if (nameElement && nameElement.textContent.includes('(Du)')) {
+                    const scoreElement = entry.querySelector('span:last-child');
+                    if (scoreElement) myFinalScore = parseInt(scoreElement.textContent, 10) || 0;
+                }
+            });
+
+            const questionSetName = currentQuestionDataCache ? currentQuestionDataCache.category : "Unbekannte Kategorie";
+
+            if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = 'Sende Punktzahl...';
+            submitScoreHallOfFameBtn.disabled = true;
+
+            const authAppUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:7000' : 'https://auth.korczewski.de';
+
+            fetch(`${authAppUrl}/api/hall-of-fame/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify({
+                    playerName: myPlayerName,
+                    questionSet: questionSetName,
+                    score: myFinalScore
+                }),
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) return response.json().then(err => Promise.reject(err));
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message === 'Score submitted successfully!') {
+                        if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = 'Punktzahl erfolgreich gesendet!';
+                        showGlobalNotification('Punktzahl an Hall of Fame gesendet!', 'success');
+                    } else {
+                        if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = `Fehler: ${data.message || 'Senden fehlgeschlagen.'}`;
+                        showGlobalNotification(`Fehler: ${data.message || 'Senden fehlgeschlagen.'}`, 'error');
+                        submitScoreHallOfFameBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting score to Hall of Fame:', error);
+                    const errorMessage = error.message || error.error || 'Netzwerkfehler oder Server nicht erreichbar.';
+                    if (submitScoreStatusMsg) submitScoreStatusMsg.textContent = `Fehler: ${errorMessage}`;
+                    showGlobalNotification(`Fehler beim Senden: ${errorMessage}`, 'error');
+                    submitScoreHallOfFameBtn.disabled = false;
+                });
+        });
+    }
+
+}); // End of DOMContentLoaded
