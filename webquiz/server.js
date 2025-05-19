@@ -21,8 +21,6 @@ if (process.env.NODE_ENV !== 'production') { // Only load dotenv in dev if prese
 }
 
 const app = express();
-app.set('trust proxy', 1);
-
 const server = http.createServer(app);
 
 // --- Environment Configuration ---
@@ -41,15 +39,12 @@ const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS, 10) || 8;
 // Parse allowed origins from env or use defaults
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['https://auth.korczewski.de', 'http://localhost:4000'];
+    : ['https://auth.korczewski.de', 'http://localhost:4000', 'http://localhost:7001'];
 
-// --- Express App Setup ---
-// Trust proxy - if your app is behind a proxy (e.g., Nginx, Heroku, Fly.io)
-if (process.env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1);
-}
+// --- Trust proxy for proper client IP detection behind reverse proxy ---
+app.set('trust proxy', 1);
 
-// Security middleware
+// --- Security middleware ---
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -63,70 +58,63 @@ app.use(helmet({
     }
 }));
 
+// --- CORS Configuration ---
 app.use(cors({
     origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST'],
     credentials: true
 }));
 
-// Session configuration - Must match auth app's settings for sharing
+// --- Express middleware ---
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(compression());
+
+// --- Session Configuration ---
 const sessionConfig = {
     secret: SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to ensure session exists
     store: MongoStore.create({
         mongoUrl: MONGODB_URI,
         ttl: 14 * 24 * 60 * 60, // 14 days
-        autoRemove: 'native', // Use MongoDB's TTL index
+        autoRemove: 'native',
         collectionName: 'sessions',
         stringify: false
     }),
     cookie: {
-        // Use consistent settings with auth app
-        secure: COOKIE_SECURE,
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
         httpOnly: true,
+        secure: COOKIE_SECURE,
         path: process.env.SESSION_COOKIE_PATH || '/',
-        sameSite: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE,
-        maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) || 14 * 24 * 60 * 60 * 1000 // 14 days in milliseconds
+        sameSite: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE
     },
-    name: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session' // Must match auth app's session name
+    name: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session'
 };
 
 // In production, set cookie domain for cross-subdomain sharing
 if (process.env.NODE_ENV === 'production' && process.env.SESSION_COOKIE_DOMAIN) {
-    sessionConfig.cookie.domain = process.env.SESSION_COOKIE_DOMAIN; // e.g. .korczewski.de
+    sessionConfig.cookie.domain = process.env.SESSION_COOKIE_DOMAIN;
 }
 
 const sessionMiddleware = session(sessionConfig);
 app.use(sessionMiddleware);
 
-// Express middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Rate limiting - Apply after 'trust proxy' is set
+// --- Rate limiting ---
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: process.env.NODE_ENV === 'test' ? 1000 : 100, // limit per IP
     standardHeaders: true,
     legacyHeaders: false,
-    // Add this new configuration:
-    keyGenerator: (req) => {
-        // Use the rightmost IP in the X-Forwarded-For header
-        // This assumes that your proxy is properly setting this header
-        return req.ip;
-    },
-    // Optional: Skip the middleware in development and test environments
+    keyGenerator: (req) => req.ip,
     skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
 });
 
 app.use(limiter);
 
-// Compression
-app.use(compression());
-
-// Socket.io setup with session sharing
+// --- Socket.IO setup ---
 const io = socketIo(server, {
+    path: '/game/socket.io',
     cors: {
         origin: ALLOWED_ORIGINS,
         methods: ["GET", "POST"],
@@ -134,25 +122,21 @@ const io = socketIo(server, {
     }
 });
 
-// Share session data with Socket.io
+// Share session data with Socket.IO
 const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
 io.use(wrap(sessionMiddleware));
 
-// Connect user's Socket.io session with their Express session
+// Connect user's Socket.IO session with their Express session
 io.use((socket, next) => {
     const session = socket.request.session;
     if (session) {
-        // Store session ID for association with the socket
         socket.sessionID = session.id;
 
-        // Check for authenticated user or guest
         if (session.passport && session.passport.user) {
-            // User is authenticated via Passport
             socket.userId = session.passport.user;
             socket.isAuthenticated = true;
             console.log(`Socket connected with authenticated user ID: ${socket.userId}`);
         } else if (session.isGuest && session.guestId) {
-            // User is a guest with a temporary ID
             socket.guestId = session.guestId;
             socket.isGuest = true;
             console.log(`Socket connected with guest ID: ${socket.guestId}`);
@@ -161,44 +145,16 @@ io.use((socket, next) => {
         next();
     } else {
         console.log('Socket connection without valid session');
-        // Still allow connection for now, but mark as unauthenticated
         socket.isAuthenticated = false;
         socket.isGuest = false;
         next();
     }
 });
-app.get('/', (req, res) => {
-    // Read the HTML file
-    fs.readFile(path.join(__dirname, 'public', 'index.html'), 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading index.html:', err);
-            return res.status(500).send('Error loading game');
-        }
 
-        // Inject CONFIG object into the HTML
-        const configScript = `<script>window.CONFIG = ${JSON.stringify(res.locals.CONFIG)};</script>`;
-        const modifiedHTML = data.replace('</head>', `${configScript}\n</head>`);
-
-        res.send(modifiedHTML);
-    });
-});
 // --- Quiz Game State ---
 let allQuestionSets = {};
 let availableCategories = [];
 let lobbies = {}; // In-memory store for lobbies
-
-// Add auth app info to the client-side configuration
-app.use((req, res, next) => {
-    // Inject configuration for client-side script
-    res.locals.CONFIG = {
-        AUTH_APP_URL: process.env.APP_BASE_URL || 'https://auth.korczewski.de',
-        SESSION_NAME: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session',
-        SESSION_PATH: process.env.SESSION_COOKIE_PATH || '/',
-        SESSION_DOMAIN: process.env.SESSION_COOKIE_DOMAIN || (req.hostname.includes('.') ? req.hostname.split('.').slice(-2).join('.') : req.hostname), // derives domain from request
-        SESSION_SAME_SITE: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE
-    };
-    next();
-});
 
 function generateLobbyId() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -241,14 +197,16 @@ function shuffleArray(array) {
     return array;
 }
 
-// --- Routes ---
-// Serve static files for the game under /game
-app.use('/game', express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d', // Cache static assets for 1 day
-    etag: true
-}));
+// --- Static Files ---
+app.use('/game', express.static(path.join(__dirname, 'public')));
 
-// Main game page route under /game
+// --- Routes ---
+// Redirect root to /game
+app.get('/', (req, res) => {
+    res.redirect('/game');
+});
+
+// Main game page route
 app.get('/game', (req, res) => {
     // Check session for user info
     let userInfo = null;
@@ -262,11 +220,15 @@ app.get('/game', (req, res) => {
     console.log('Session on quiz app:', req.sessionID,
         'auth:', userInfo ? (userInfo.isAuthenticated ? 'yes' : 'guest') : 'none');
 
-    // Pass server-side config to the client
+    // Prepare client config
     const clientConfig = {
-        ...res.locals.CONFIG,
-        // Add CSRF token if authentication app provides one
-        CSRF_TOKEN: req.session.csrfToken || ''
+        AUTH_APP_URL: process.env.APP_BASE_URL || 'https://auth.korczewski.de',
+        SESSION_NAME: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session',
+        SESSION_PATH: process.env.SESSION_COOKIE_PATH || '/',
+        SESSION_DOMAIN: process.env.SESSION_COOKIE_DOMAIN || req.hostname,
+        SESSION_SAME_SITE: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE,
+        CSRF_TOKEN: req.session.csrfToken || '',
+        BASE_PATH: '/game/' // For client-side path awareness
     };
 
     // Read the HTML file
@@ -284,7 +246,7 @@ app.get('/game', (req, res) => {
     });
 });
 
-// API routes under /game/api
+// API routes
 app.get('/game/api/categories', (req, res) => {
     res.json({ categories: availableCategories });
 });
@@ -315,7 +277,19 @@ app.use((err, req, res, next) => {
 });
 
 // --- Socket.IO Game Logic ---
-// ... (rest of the socket.io game logic is unchanged, so I'm keeping it as is)
+// Set up Socket.IO event handlers
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    // Handle socket disconnection
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        // Add logic to handle player disconnection from lobbies
+    });
+
+    // Add other event handlers for your game logic (createLobby, joinLobby, etc.)
+    // These would be specific to your game implementation
+});
 
 // --- Server Initialization ---
 server.listen(PORT, () => {

@@ -31,7 +31,7 @@ router.get('/dashboard', ensureAuthenticated, (req, res) => {
         return res.redirect('/admin/dashboard'); // Or 'http://game.korczewski.de/admin-lounge' if applicable
     } else {
         // Regular user is authenticated, send them to the game.
-        return res.redirect('http://game.korczewski.de');
+        return res.redirect('http://auth.korczewski.de/game');
     }
 });
 
@@ -40,7 +40,7 @@ router.get('/play-as-guest', (req, res) => {
     if (req.isAuthenticated()) {
         // User is already logged in.
         // Redirect them to the game with their existing authenticated session.
-        return res.redirect('http://game.korczewski.de');
+        return res.redirect('http://auth.korczewski.de/game');
     }
 
     // User is not authenticated, proceed to create a guest session.
@@ -65,7 +65,7 @@ router.get('/play-as-guest', (req, res) => {
         // Session saved, now redirect to the game app.
         // The session cookie (with .korczewski.de domain) will be sent.
         console.log('Guest session created, redirecting to game.');
-        res.redirect('http://game.korczewski.de');
+        res.redirect('http://auth.korczewski.de/game');
     });
 });
 
