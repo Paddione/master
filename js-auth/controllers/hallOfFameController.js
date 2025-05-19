@@ -23,12 +23,21 @@ exports.submitScore = async (req, res) => {
             return res.status(400).json({ message: 'Question set must be a non-empty string.' });
         }
 
+        // Extract user ID from session if available
+        let userId = null;
+        if (req.user && req.user._id) {
+            // Standard passport authentication
+            userId = req.user._id;
+        } else if (req.session && req.session.passport && req.session.passport.user) {
+            // Session has passport data but req.user not populated
+            userId = req.session.passport.user;
+        }
 
         const newScoreEntry = new Score({
             playerName: playerName.trim(),
             questionSet: questionSet.trim(),
             score: parseInt(score, 10), // Ensure score is an integer
-            userId: req.user ? req.user._id : null // If user is logged in (session cookie sent), link their ID
+            userId: userId // Use the extracted userId
         });
 
         await newScoreEntry.save();

@@ -1,3 +1,4 @@
+
 // public/script.js
 document.addEventListener('DOMContentLoaded', () => {
     // Get the session configuration from environment variables if available
@@ -9,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const socket = io({
-        withCredentials: true, // Important for session cookies
+        withCredentials: true,
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
@@ -1202,13 +1203,11 @@ ${player.isHost ? '<span class="player-host-badge bg-sky-500 text-white text-xs 
     if (!window.CONFIG) {
         // Create a default CONFIG object if not provided by the server
         window.CONFIG = {
-            AUTH_APP_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:7000'
-                : 'https://auth.korczewski.de',
+            AUTH_APP_URL: window.location.origin, // Same domain
             SESSION_NAME: 'quiz_auth_session',
             SESSION_PATH: '/',
-            SESSION_DOMAIN: window.location.hostname.includes('.') ? '.' + window.location.hostname.split('.').slice(-2).join('.') : window.location.hostname,
-            SESSION_SAME_SITE: 'none'
+            SESSION_DOMAIN: window.location.hostname,
+            SESSION_SAME_SITE: 'lax'
         };
         console.log('[DEBUG] Using default CONFIG:', window.CONFIG);
     } else {
@@ -1252,11 +1251,8 @@ ${player.isHost ? '<span class="player-host-badge bg-sky-500 text-white text-xs 
             submitScoreHallOfFameBtn.disabled = true;
 
             // The actual fetch to your auth-app's API endpoint
-            // Use environment-based URL configuration from window.CONFIG if available
-            const authAppUrl = window.CONFIG?.AUTH_APP_URL ||
-                (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                    ? 'http://localhost:7000'
-                    : 'https://auth.korczewski.de');
+            // Always use same domain for Hall of Fame submissions
+            const authAppUrl = window.location.origin;
 
             // Headers with CSRF token if available
             const headers = {

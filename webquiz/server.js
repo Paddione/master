@@ -21,6 +21,8 @@ if (process.env.NODE_ENV !== 'production') { // Only load dotenv in dev if prese
 }
 
 const app = express();
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 
 // --- Environment Configuration ---
@@ -39,7 +41,7 @@ const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS, 10) || 8;
 // Parse allowed origins from env or use defaults
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['https://auth.korczewski.de', 'https://game.korczewski.de', 'http://localhost:4000', 'http://localhost:7001'];
+    : ['https://auth.korczewski.de', 'http://localhost:4000'];
 
 // --- Express App Setup ---
 // Trust proxy - if your app is behind a proxy (e.g., Nginx, Heroku, Fly.io)
@@ -52,7 +54,7 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://cdnjs.cloudflare.com'],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdnjs.cloudflare.com', 'local.adguard.org'],
             styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             fontSrc: ["'self'", 'https://fonts.gstatic.com'],
             imgSrc: ["'self'", 'data:'],
@@ -108,7 +110,16 @@ const limiter = rateLimit({
     max: process.env.NODE_ENV === 'test' ? 1000 : 100, // limit per IP
     standardHeaders: true,
     legacyHeaders: false,
+    // Add this new configuration:
+    keyGenerator: (req) => {
+        // Use the rightmost IP in the X-Forwarded-For header
+        // This assumes that your proxy is properly setting this header
+        return req.ip;
+    },
+    // Optional: Skip the middleware in development and test environments
+    skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
 });
+
 app.use(limiter);
 
 // Compression
@@ -156,7 +167,21 @@ io.use((socket, next) => {
         next();
     }
 });
+app.get('/', (req, res) => {
+    // Read the HTML file
+    fs.readFile(path.join(__dirname, 'public', 'index.html'), 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading index.html:', err);
+            return res.status(500).send('Error loading game');
+        }
 
+        // Inject CONFIG object into the HTML
+        const configScript = `<script>window.CONFIG = ${JSON.stringify(res.locals.CONFIG)};</script>`;
+        const modifiedHTML = data.replace('</head>', `${configScript}\n</head>`);
+
+        res.send(modifiedHTML);
+    });
+});
 // --- Quiz Game State ---
 let allQuestionSets = {};
 let availableCategories = [];
@@ -217,14 +242,14 @@ function shuffleArray(array) {
 }
 
 // --- Routes ---
-// Serve static files from the "public" directory with caching
-app.use('/assets', express.static(path.join(__dirname, 'public'), {
+// Serve static files for the game under /game
+app.use('/game', express.static(path.join(__dirname, 'public'), {
     maxAge: '1d', // Cache static assets for 1 day
     etag: true
 }));
 
-// Inject client-side config into index.html
-app.get('/', (req, res) => {
+// Main game page route under /game
+app.get('/game', (req, res) => {
     // Check session for user info
     let userInfo = null;
     if (req.session.passport && req.session.passport.user) {
@@ -259,13 +284,12 @@ app.get('/', (req, res) => {
     });
 });
 
-// API routes
-app.get('/api/categories', (req, res) => {
+// API routes under /game/api
+app.get('/game/api/categories', (req, res) => {
     res.json({ categories: availableCategories });
 });
 
-// User info endpoint - for client to check authentication status
-app.get('/api/user', (req, res) => {
+app.get('/game/api/user', (req, res) => {
     if (req.session.passport && req.session.passport.user) {
         return res.json({
             isAuthenticated: true,
