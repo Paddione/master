@@ -3,7 +3,7 @@ import FormulaCollection from './FormulaCollection';
 import ITIStudyGuide from './ITIStudyGuide';
 import KonzepteViewer from './KonzepteViewer';
 import HomePage from './HomePage';
-import './App.css';
+import '../../formula-app-fresh/src/App.css';
 
 const App: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<string>('home');
