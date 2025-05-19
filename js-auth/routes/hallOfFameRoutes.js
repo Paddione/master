@@ -1,24 +1,125 @@
-// routes/hallOfFameRoutes.js
-const express = require('express');
-const router = express.Router();
-const hallOfFameController = require('../controllers/hallOfFameController');
-const { ensureAuthenticated } = require('../middlewares/authMiddleware'); // To protect the HTML page
+// controllers/hallOfFameController.js
+const Score = require('../models/Score');
+const User = require('../models/User'); // Optional: if you want to fetch username for userId
 
-// --- API Routes ---
-// Endpoint for the quiz game client to submit scores
-// No ensureAuthenticated here, as guests might submit scores,
-// but we check req.user in the controller to link authenticated users.
-router.post('/api/hall-of-fame/submit', hallOfFameController.submitScore);
+// POST /api/hall-of-fame/submit
+exports.submitScore = async (req, res) => {
+    try {
+        const { playerName, questionSet, score } = req.body;
 
-// Endpoint to get all unique question set names that have scores
-router.get('/api/hall-of-fame/questionsets', hallOfFameController.getQuestionSets);
+        if (!playerName || !questionSet || score === undefined) {
+            return res.status(400).json({ message: 'Missing required fields: playerName, questionSet, score.' });
+        }
 
-// Endpoint to get scores for a specific question set
-router.get('/api/hall-of-fame/:questionSet', hallOfFameController.getScoresByQuestionSet);
+        if (typeof score !== 'number' || score < 0) {
+            return res.status(400).json({ message: 'Score must be a non-negative number.' });
+        }
+
+        if (typeof playerName !== 'string' || playerName.trim().length === 0 || playerName.length > 50) {
+            return res.status(400).json({ message: 'Player name must be a non-empty string up to 50 characters.' });
+        }
+
+        if (typeof questionSet !== 'string' || questionSet.trim().length === 0) {
+            return res.status(400).json({ message: 'Question set must be a non-empty string.' });
+        }
+
+        // Extract user ID from session if available
+        let userId = null;
+        if (req.user && req.user._id) {
+            // Standard passport authentication
+            userId = req.user._id;
+        } else if (req.session && req.session.passport && req.session.passport.user) {
+            // Session has passport data but req.user not populated
+            userId = req.session.passport.user;
+        }
+
+        const newScoreEntry = new Score({
+            playerName: playerName.trim(),
+            questionSet: questionSet.trim(),
+            score: parseInt(score, 10), // Ensure score is an integer
+            userId: userId // Use the extracted userId
+        });
+
+        await newScoreEntry.save();
+        res.status(201).json({ message: 'Score submitted successfully!', score: newScoreEntry });
+
+    } catch (error) {
+        console.error('Error submitting score:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: 'Validation error.', errors: error.errors });
+        }
+        res.status(500).json({ message: 'Server error while submitting score.' });
+    }
+};
+
+// GET /api/hall-of-fame/questionsets
+exports.getQuestionSets = async (req, res) => {
+    try {
+        // Find distinct questionSet values from the Score collection
+        const questionSets = await Score.distinct('questionSet');
+        if (!questionSets) {
+            return res.status(404).json({ message: 'No question sets found.' });
+        }
+        res.status(200).json(questionSets.sort()); // Sort them alphabetically
+    } catch (error) {
+        console.error('Error fetching question sets:', error);
+        res.status(500).json({ message: 'Server error while fetching question sets.' });
+    }
+};
+
+// GET /api/hall-of-fame/:questionSet
+exports.getScoresByQuestionSet = async (req, res) => {
+    try {
+        const questionSet = req.params.questionSet;
+        if (!questionSet) {
+            return res.status(400).json({ message: 'Question set parameter is required.' });
+        }
+
+        const limit = parseInt(req.query.limit, 10) || 20; // Default to top 20 scores
+        const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+        const skip = (page - 1) * limit;
+
+        const scores = await Score.find({ questionSet: questionSet })
+            .sort({ score: -1, timestamp: 1 }) // Sort by score (desc), then by time (asc for tie-breaking)
+            .skip(skip)
+            .limit(limit)
+            .populate('userId', 'username') // Optionally populate username if userId is present
+            .select('playerName score timestamp userId') // Select specific fields
+            .lean(); // Use .lean() for faster queries if you don't need Mongoose model instances
+
+        const totalScores = await Score.countDocuments({ questionSet: questionSet });
+
+        if (!scores.length && totalScores === 0) {
+            // It's not an error if a question set has no scores yet, return empty array
+            return res.status(200).json({
+                scores: [],
+                currentPage: page,
+                totalPages: 0,
+                totalScores: 0,
+                message: 'No scores found for this question set yet.'
+            });
+        }
+
+        res.status(200).json({
+            scores,
+            currentPage: page,
+            totalPages: Math.ceil(totalScores / limit),
+            totalScores
+        });
+
+    } catch (error) {
+        console.error(`Error fetching scores for ${req.params.questionSet}:`, error);
+        res.status(500).json({ message: 'Server error while fetching scores.' });
+    }
+};
 
 
-// --- HTML Page Route ---
-// Page to display the Hall of Fame (requires user to be logged in to view)
-router.get('/hall-of-fame', ensureAuthenticated, hallOfFameController.getHallOfFamePage);
-
-module.exports = router;
+// GET /hall-of-fame (HTML Page)
+exports.getHallOfFamePage = (req, res) => {
+    // This controller just renders the page.
+    // The actual data fetching for the dropdown and table will be done by client-side JS.
+    res.render('hall-of-fame', {
+        title: 'Hall of Fame',
+        currentUser: req.user // Pass user info for the view
+    });
+};

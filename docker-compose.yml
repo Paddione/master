@@ -60,6 +60,14 @@ services:
       EMAIL_SENDER_ADDRESS: ${EMAIL_SENDER_ADDRESS}
       FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL}
       FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD}
+      # Session sharing configuration
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-.korczewski.de}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-quiz_auth_session}
+      SESSION_COOKIE_PATH: ${SESSION_COOKIE_PATH:-/}
+      SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-none}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SESSION_COOKIE_MAX_AGE: ${SESSION_COOKIE_MAX_AGE:-604800000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://auth.korczewski.de,https://game.korczewski.de,http://localhost:4000,http://localhost:7001}
     depends_on:
       mongo:
         condition: service_healthy
@@ -90,13 +98,16 @@ services:
       MONGO_SESSIONS_DB_NAME: ${MONGO_SESSIONS_DB_NAME:-js_auth_db}
       MONGO_AUTH_SOURCE_DB: ${MONGO_AUTH_SOURCE_DB:-admin} # Usually 'admin' for the root user
       SESSION_SECRET: ${SESSION_SECRET}
-      # ALLOWED_ORIGINS is used by server_1.js (quiz app) for CORS.
-      # Set this in your .env file. Example: "http://localhost:4000,https://game.yourdomain.com"
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4000}
-      # CSRF_SECRET and APP_BASE_URL are included as they were in your previous compose snippet for quiz-app,
-      # though server_1.js doesn't directly use them.
-      CSRF_SECRET: ${CSRF_SECRET}
-      APP_BASE_URL: ${QUIZ_APP_BASE_URL} # Define QUIZ_APP_BASE_URL in .env if needed by quiz app
+      # Session sharing configuration
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-.korczewski.de}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-quiz_auth_session}
+      SESSION_COOKIE_PATH: ${SESSION_COOKIE_PATH:-/}
+      SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-none}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SESSION_COOKIE_MAX_AGE: ${SESSION_COOKIE_MAX_AGE:-604800000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://auth.korczewski.de,https://game.korczewski.de,http://localhost:4000,http://localhost:7001}
+      APP_BASE_URL: ${APP_BASE_URL} # Auth app URL
+      QUIZ_APP_BASE_URL: ${QUIZ_APP_BASE_URL:-https://game.korczewski.de} # Quiz app URL
     depends_on:
       mongo:
         condition: service_healthy

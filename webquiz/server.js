@@ -28,7 +28,6 @@ const PORT = process.env.PORT || 3000;
 // FIX: Use the same MongoDB URI format as in docker-compose, using the container name "mongo" instead of localhost
 const MONGODB_URI = process.env.MONGO_URI || `mongodb://${process.env.MONGO_ROOT_USER}:${process.env.MONGO_ROOT_PASSWORD}@mongo:27017/${process.env.MONGO_SESSIONS_DB_NAME}?authSource=admin&directConnection=true`;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'quiz-session-secret-key-change-in-production';
-const CORS_ORIGIN = process.env.ALLOWED_ORIGINS || '*';
 const COOKIE_SECURE = process.env.NODE_ENV === 'production';
 const COOKIE_SAME_SITE = process.env.NODE_ENV === 'production' ? 'none' : 'lax';
 
@@ -37,9 +36,16 @@ const QUESTION_TIME_LIMIT = parseInt(process.env.QUESTION_TIME_LIMIT, 10) || 60;
 const CORRECT_ANSWER_DISPLAY_DURATION = parseInt(process.env.CORRECT_ANSWER_DISPLAY_DURATION, 10) || 3000; // milliseconds
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS, 10) || 8;
 
+// Parse allowed origins from env or use defaults
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['https://auth.korczewski.de', 'https://game.korczewski.de', 'http://localhost:4000', 'http://localhost:7001'];
+
 // --- Express App Setup ---
 // Trust proxy - if your app is behind a proxy (e.g., Nginx, Heroku, Fly.io)
-app.set('trust proxy', 1);
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
 
 // Security middleware
 app.use(helmet({
@@ -50,37 +56,46 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             fontSrc: ["'self'", 'https://fonts.gstatic.com'],
             imgSrc: ["'self'", 'data:'],
-            connectSrc: ["'self'", CORS_ORIGIN === '*' ? '*' : CORS_ORIGIN.split(',')]
+            connectSrc: ["'self'"].concat(ALLOWED_ORIGINS)
         }
     }
 }));
 
 app.use(cors({
-    origin: CORS_ORIGIN,
+    origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST'],
     credentials: true
 }));
 
-// Session configuration
-const sessionMiddleware = session({
+// Session configuration - Must match auth app's settings for sharing
+const sessionConfig = {
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60, // Session TTL (14 days)
+        ttl: 14 * 24 * 60 * 60, // 14 days
         autoRemove: 'native', // Use MongoDB's TTL index
         collectionName: 'sessions',
         stringify: false
     }),
     cookie: {
+        // Use consistent settings with auth app
         secure: COOKIE_SECURE,
-        sameSite: COOKIE_SAME_SITE,
         httpOnly: true,
-        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days in milliseconds
-    }
-});
+        path: process.env.SESSION_COOKIE_PATH || '/',
+        sameSite: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE,
+        maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) || 14 * 24 * 60 * 60 * 1000 // 14 days in milliseconds
+    },
+    name: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session' // Must match auth app's session name
+};
 
+// In production, set cookie domain for cross-subdomain sharing
+if (process.env.NODE_ENV === 'production' && process.env.SESSION_COOKIE_DOMAIN) {
+    sessionConfig.cookie.domain = process.env.SESSION_COOKIE_DOMAIN; // e.g. .korczewski.de
+}
+
+const sessionMiddleware = session(sessionConfig);
 app.use(sessionMiddleware);
 
 // Express middleware
@@ -102,7 +117,7 @@ app.use(compression());
 // Socket.io setup with session sharing
 const io = socketIo(server, {
     cors: {
-        origin: CORS_ORIGIN,
+        origin: ALLOWED_ORIGINS,
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -115,11 +130,30 @@ io.use(wrap(sessionMiddleware));
 // Connect user's Socket.io session with their Express session
 io.use((socket, next) => {
     const session = socket.request.session;
-    if (session && session.id) {
+    if (session) {
+        // Store session ID for association with the socket
         socket.sessionID = session.id;
+
+        // Check for authenticated user or guest
+        if (session.passport && session.passport.user) {
+            // User is authenticated via Passport
+            socket.userId = session.passport.user;
+            socket.isAuthenticated = true;
+            console.log(`Socket connected with authenticated user ID: ${socket.userId}`);
+        } else if (session.isGuest && session.guestId) {
+            // User is a guest with a temporary ID
+            socket.guestId = session.guestId;
+            socket.isGuest = true;
+            console.log(`Socket connected with guest ID: ${socket.guestId}`);
+        }
+
         next();
     } else {
-        next(new Error('Unauthorized: No session found'));
+        console.log('Socket connection without valid session');
+        // Still allow connection for now, but mark as unauthenticated
+        socket.isAuthenticated = false;
+        socket.isGuest = false;
+        next();
     }
 });
 
@@ -127,6 +161,19 @@ io.use((socket, next) => {
 let allQuestionSets = {};
 let availableCategories = [];
 let lobbies = {}; // In-memory store for lobbies
+
+// Add auth app info to the client-side configuration
+app.use((req, res, next) => {
+    // Inject configuration for client-side script
+    res.locals.CONFIG = {
+        AUTH_APP_URL: process.env.APP_BASE_URL || 'https://auth.korczewski.de',
+        SESSION_NAME: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session',
+        SESSION_PATH: process.env.SESSION_COOKIE_PATH || '/',
+        SESSION_DOMAIN: process.env.SESSION_COOKIE_DOMAIN || (req.hostname.includes('.') ? req.hostname.split('.').slice(-2).join('.') : req.hostname), // derives domain from request
+        SESSION_SAME_SITE: process.env.SESSION_COOKIE_SAME_SITE || COOKIE_SAME_SITE
+    };
+    next();
+});
 
 function generateLobbyId() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -176,19 +223,65 @@ app.use('/assets', express.static(path.join(__dirname, 'public'), {
     etag: true
 }));
 
-// Main route with session check
+// Inject client-side config into index.html
 app.get('/', (req, res) => {
-    // Initialize session if needed
-    if (!req.session.userId) {
-        req.session.userId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    // Check session for user info
+    let userInfo = null;
+    if (req.session.passport && req.session.passport.user) {
+        userInfo = { isAuthenticated: true, id: req.session.passport.user };
+    } else if (req.session.isGuest && req.session.guestId) {
+        userInfo = { isGuest: true, id: req.session.guestId };
     }
-    // Send the game HTML
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+    // Log session info for debugging
+    console.log('Session on quiz app:', req.sessionID,
+        'auth:', userInfo ? (userInfo.isAuthenticated ? 'yes' : 'guest') : 'none');
+
+    // Pass server-side config to the client
+    const clientConfig = {
+        ...res.locals.CONFIG,
+        // Add CSRF token if authentication app provides one
+        CSRF_TOKEN: req.session.csrfToken || ''
+    };
+
+    // Read the HTML file
+    fs.readFile(path.join(__dirname, 'public', 'index.html'), 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading index.html:', err);
+            return res.status(500).send('Error loading game');
+        }
+
+        // Inject CONFIG object into the HTML
+        const configScript = `<script>window.CONFIG = ${JSON.stringify(clientConfig)};</script>`;
+        const modifiedHTML = data.replace('</head>', `${configScript}\n</head>`);
+
+        res.send(modifiedHTML);
+    });
 });
 
 // API routes
 app.get('/api/categories', (req, res) => {
     res.json({ categories: availableCategories });
+});
+
+// User info endpoint - for client to check authentication status
+app.get('/api/user', (req, res) => {
+    if (req.session.passport && req.session.passport.user) {
+        return res.json({
+            isAuthenticated: true,
+            id: req.session.passport.user
+        });
+    } else if (req.session.isGuest && req.session.guestId) {
+        return res.json({
+            isGuest: true,
+            id: req.session.guestId
+        });
+    } else {
+        return res.json({
+            isAuthenticated: false,
+            isGuest: false
+        });
+    }
 });
 
 // Error handler

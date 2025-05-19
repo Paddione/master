@@ -16,14 +16,21 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
+// Set trust proxy if behind a reverse proxy
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 // --- CORS Configuration ---
 // IMPORTANT: Configure this BEFORE your routes and other middleware that needs it.
-const allowedOrigins = [
-    'https://game.korczewski.de', // Your quiz game app
-    'http://localhost:4000',      // Quiz game local dev (if applicable, adjust port)
-    'http://localhost:3001',      // Quiz game local dev (another possible port)
-    process.env.APP_BASE_URL      // Your auth app's own base URL (e.g., https://auth.korczewski.de)
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : [
+        'https://game.korczewski.de', // Your quiz game app
+        'http://localhost:4000',      // Quiz game local dev (if applicable, adjust port)
+        'http://localhost:3001',      // Quiz game local dev (another possible port)
+        process.env.APP_BASE_URL      // Your auth app's own base URL (e.g., https://auth.korczewski.de)
+    ];
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -98,25 +105,33 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Express Session Middleware (ensure cookie.domain is set for cross-subdomain if needed for API calls with credentials)
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        store: MongoStore.create({
-            mongoUrl: dbURI,
-            collectionName: 'sessions',
-            ttl: 14 * 24 * 60 * 60
-        }),
-        cookie: {
-            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            domain: process.env.NODE_ENV === 'production' ? '.korczewski.de' : undefined // For cross-subdomain sessions in prod
-        }
-    })
-);
+// Express Session Middleware with consistent configuration
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: dbURI,
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60 // 14 days
+    }),
+    cookie: {
+        // Use consistent settings from environment variables
+        maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) || 1000 * 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        path: process.env.SESSION_COOKIE_PATH || '/',
+        sameSite: process.env.SESSION_COOKIE_SAME_SITE || 'lax'
+    },
+    name: process.env.SESSION_COOKIE_NAME || 'quiz_auth_session' // Consistent name across services
+};
+
+// In production, set cookie domain for cross-subdomain sharing
+if (process.env.NODE_ENV === 'production' && process.env.SESSION_COOKIE_DOMAIN) {
+    sessionConfig.cookie.domain = process.env.SESSION_COOKIE_DOMAIN;
+}
+
+app.use(session(sessionConfig));
 
 // Passport Middleware
 app.use(passport.initialize());
@@ -127,12 +142,11 @@ app.use(passport.session());
 // For APIs called from different subdomains (like your game app calling auth app API),
 // session cookies + CORS with credentials:true is often the primary protection against CSRF
 // if the API endpoint is state-changing.
-// If your API endpoint /api/hall-of-fame/submit is protected by CSRF,
-// your game client will need to fetch a CSRF token and include it in the POST request.
-// This can be complex across different subdomains.
-// Consider if CSRF is needed for this specific API endpoint or if session validation + CORS is sufficient.
-// For now, CSRF is applied globally.
-app.use(csrf());
+const csrfProtection = csrf({
+    cookie: false, // Don't use a cookie-based CSRF token storage, since we want to make cross-domain API calls
+    ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] // Don't require CSRF for these methods
+});
+app.use(csrfProtection);
 
 // Connect Flash Middleware
 app.use(flash());
@@ -153,14 +167,12 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Routes ---
-// API routes should ideally be defined before CSRF if they don't use cookie-based CSRF tokens
-// or if they use a different protection mechanism (like JWTs or API keys).
-// However, if /api/hall-of-fame/submit relies on the session (req.user), it needs to be after session middleware.
 app.use('/', require('./routes/indexRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/user', require('./routes/userRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/', require('./routes/hallOfFameRoutes')); // Contains /api/hall-of-fame/*
+app.use('/api', require('./routes/apiRoutes'));
 
 // --- Error Handling Middleware ---
 // CSRF Token Error Handler
