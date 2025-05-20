@@ -198,7 +198,8 @@ function shuffleArray(array) {
 }
 
 // --- Static Files ---
-app.use('/game', express.static(path.join(__dirname, 'public')));
+// Move static files after the route handlers
+// app.use('/game', express.static(path.join(__dirname, 'public')));
 
 // --- Routes ---
 // Redirect root to /game
@@ -245,6 +246,9 @@ app.get('/game', (req, res) => {
         res.send(modifiedHTML);
     });
 });
+
+// Serve static files for /game after the route handler
+app.use('/game', express.static(path.join(__dirname, 'public')));
 
 // API routes
 app.get('/game/api/categories', (req, res) => {
